@@ -1,0 +1,828 @@
+<!DOCTYPE html> 
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Party in Lviv</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #0d0714;
+            color: #f3effa;
+            padding: 16px;
+            padding-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 22px;
+            text-align: center;
+            margin-bottom: 16px;
+            color: #d084ff;
+            text-shadow: 0 0 12px rgba(187, 107, 255, 0.4);
+        }
+
+        /* Перемикач головних вкладок */
+        .main-tabs {
+            display: flex;
+            background: rgba(35, 18, 56, 0.7);
+            padding: 4px;
+            border-radius: 14px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(187, 107, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .main-tab-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            color: #a491bc;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .main-tab-btn.active {
+            background: linear-gradient(135deg, #a855f7, #7e22ce);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
+        }
+
+        /* Фільтри категорій */
+        .categories {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            margin-bottom: 16px;
+        }
+
+        .categories::-webkit-scrollbar {
+            display: none;
+        }
+
+        .cat-btn {
+            background: rgba(35, 18, 56, 0.6);
+            color: #a491bc;
+            border: 1px solid rgba(187, 107, 255, 0.2);
+            padding: 8px 14px;
+            border-radius: 20px;
+            white-space: nowrap;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .cat-btn.active {
+            background: #a855f7;
+            color: #ffffff;
+            border-color: #a855f7;
+            box-shadow: 0 2px 8px rgba(168, 85, 247, 0.3);
+        }
+
+        /* Картки */
+        .cards-grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .card {
+            background: rgba(28, 15, 46, 0.7);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(187, 107, 255, 0.15);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            cursor: pointer;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .card:active {
+            transform: scale(0.98);
+            border-color: rgba(187, 107, 255, 0.5);
+        }
+
+        .card-img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .card-body {
+            padding: 14px 16px 16px 16px;
+        }
+
+        .card-badge {
+            display: inline-block;
+            background: rgba(168, 85, 247, 0.2);
+            color: #d084ff;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #ffffff;
+        }
+
+        .card-desc {
+            font-size: 13px;
+            color: #bfaed9;
+            margin-bottom: 10px;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .card-meta {
+            font-size: 12px;
+            color: #8c76ab;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 6px;
+        }
+
+        /* Стилі кастомних маркерів зі стрілкою */
+        .leaflet-div-icon {
+            background: transparent !important;
+            border: none !important;
+        }
+
+        .custom-pin-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transform: translate(-50%, -100%);
+        }
+
+        /* Маленька іконка (тільки смайлики) */
+        .pin-small {
+            background: linear-gradient(135deg, #a855f7, #7e22ce);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.6);
+            border: 2px solid #ffffff;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .pin-small::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 6px 5px 0 5px;
+            border-style: solid;
+            border-color: #7e22ce transparent transparent transparent;
+        }
+
+        /* Велика кнопка з назвою та смайликами */
+        .pin-large {
+            background: linear-gradient(135deg, #a855f7, #7e22ce);
+            color: #ffffff;
+            padding: 6px 12px;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 12px;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.6);
+            border: 1.5px solid #ffffff;
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .pin-large::after {
+            content: '';
+            position: absolute;
+            bottom: -7px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 7px 6px 0 6px;
+            border-style: solid;
+            border-color: #7e22ce transparent transparent transparent;
+        }
+
+        /* Стилі для списку подій у модалці закладу (з картинками та прокруткою) */
+        .venue-events-section {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(187, 107, 255, 0.2);
+        }
+
+        .venue-events-title {
+            font-size: 15px;
+            font-weight: bold;
+            color: #d084ff;
+            margin-bottom: 12px;
+        }
+
+        .venue-events-scroll {
+            max-height: 260px; /* Висота вікна, після якої з'явиться скрол */
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-right: 4px;
+        }
+
+        .venue-events-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .venue-events-scroll::-webkit-scrollbar-thumb {
+            background: rgba(168, 85, 247, 0.4);
+            border-radius: 4px;
+        }
+
+        .venue-event-card {
+            background: rgba(35, 18, 56, 0.8);
+            border: 1px solid rgba(187, 107, 255, 0.25);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .venue-event-img {
+            width: 100%;
+            height: 130px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .venue-event-body {
+            padding: 12px;
+        }
+
+        .venue-event-name {
+            font-weight: bold;
+            font-size: 15px;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .venue-event-time {
+            font-size: 12px;
+            color: #d084ff;
+            margin-bottom: 6px;
+        }
+
+        .venue-event-desc {
+            font-size: 12px;
+            color: #bfaed9;
+            line-height: 1.4;
+        }
+
+        /* Модальне вікно */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 5, 18, 0.85);
+            backdrop-filter: blur(12px);
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: #180c29;
+            width: 100%;
+            max-height: 85vh;
+            border-top-left-radius: 24px;
+            border-top-right-radius: 24px;
+            padding: 20px;
+            overflow-y: auto;
+            border-top: 1px solid rgba(187, 107, 255, 0.3);
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.8);
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
+        }
+
+        .modal-overlay.open .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .modal-close {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #ffffff;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .modal-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 14px;
+            margin-bottom: 14px;
+        }
+
+        .btn-action {
+            display: block;
+            width: 100%;
+            background: linear-gradient(135deg, #a855f7, #7e22ce);
+            color: #ffffff;
+            text-align: center;
+            text-decoration: none;
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 14px;
+            margin-top: 16px;
+            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
+        }
+
+        .loader {
+            text-align: center;
+            color: #8c76ab;
+            padding: 40px 0;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🍸 Тусовель Львова</h1>
+
+    <!-- Перемикач вкладок -->
+    <div class="main-tabs">
+        <button id="tab-places-btn" class="main-tab-btn active" onclick="switchMainTab('places')">🥂 Заклади</button>
+        <button id="tab-events-btn" class="main-tab-btn" onclick="switchMainTab('events')">🎉 Афіша подій</button>
+        <button id="tab-map-btn" class="main-tab-btn" onclick="switchMainTab('map')">🗺 Мапа</button>
+    </div>
+
+    <!-- Категорії (для закладів) -->
+    <div id="categories-bar" class="categories">
+        <button class="cat-btn active" onclick="filterPlaces('all', this)">🔥 Усі</button>
+        <button class="cat-btn" onclick="filterPlaces('Бар', this)">🍻 Бари / Пиво</button>
+        <button class="cat-btn" onclick="filterPlaces('Live', this)">🎸 Live / Музика</button>
+        <button class="cat-btn" onclick="filterPlaces('Стендап', this)">🎤 Шоу / Стендап</button>
+    </div>
+
+    <!-- Контейнер для карти -->
+    <div id="map-container" style="display: none; width: 100%; height: 75vh; border-radius: 16px; border: 1px solid rgba(187, 107, 255, 0.2); overflow: hidden; position: relative;"></div>
+    
+    <!-- Контейнер для списку карток -->
+    <div id="content-list" class="cards-grid">
+        <div class="loader">⏳ Завантаження тусовок...</div>
+    </div>
+
+    <!-- Модальне вікно -->
+    <div id="modal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <span id="modal-badge" class="card-badge">Категорія</span>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <img id="modal-img" src="" class="modal-img" style="display:none;">
+            <h2 id="modal-title" style="margin-bottom: 8px; color: #fff;"></h2>
+            <div id="modal-meta" class="card-meta" style="margin-bottom: 12px;"></div>
+            <p id="modal-desc" style="color: #bfaed9; font-size: 14px; line-height: 1.5;"></p>
+            
+            <!-- Контейнер для списку подій закладу -->
+            <div id="modal-events-list"></div>
+
+            <a id="modal-btn" href="#" target="_blank" class="btn-action" style="display:none;">🗺 Відкрити в Google Maps</a>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbzHkKm2jhWes-KrKUcY5w7Yq5gCvp4ELum8sprFGfER20Tl6Ar2t21ghziV_M8AUUcBbg/exec";
+
+        let dbData = { Заклади: [], Події: [] };
+        let currentTab = 'places';
+
+        // 1. Логування користувача
+        if (window.Telegram && window.Telegram.WebApp) {
+            const tg = window.Telegram.WebApp;
+            tg.ready();
+            tg.expand();
+            
+            const user = tg.initDataUnsafe?.user;
+            if (user) {
+                fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8',
+                    },
+                    body: JSON.stringify({
+                        action: 'track_user',
+                        user: {
+                            id: user.id,
+                            username: user.username || 'не вказано',
+                            first_name: user.first_name || 'не вказано'
+                        }
+                    })
+                }).catch(err => console.error('Помилка трекінгу юзера:', err));
+            }
+        }
+
+        // 2. Отримання даних з Google Таблиці
+        async function loadData() {
+            try {
+                const res = await fetch(API_URL);
+                dbData = await res.json();
+                renderContent();
+            } catch (err) {
+                document.getElementById('content-list').innerHTML = '<div class="loader" style="color:#ff5252;">❌ Помилка завантаження даних</div>';
+            }
+        }
+
+        // 3. Відмальовка списку
+        function renderContent(filterCategory = 'all') {
+            const container = document.getElementById('content-list');
+            
+            if (currentTab === 'places') {
+                let places = dbData['Заклади'] || [];
+                
+                if (filterCategory !== 'all') {
+                    places = places.filter(p => {
+                        const cat = String(p['Категорія'] || p['Опис / Вайб'] || '').toLowerCase();
+                        return cat.includes(filterCategory.toLowerCase());
+                    });
+                }
+
+                if (places.length === 0) {
+                    container.innerHTML = '<div class="loader">Закладів не знайдено 😔</div>';
+                    return;
+                }
+
+                container.innerHTML = places.map((p, idx) => `
+                    <div class="card" onclick="openPlaceModal(${idx})">
+                        ${(p['Фото (посилання)'] || p['Фото'] || p['Image']) ? `<img src="${p['Фото (посилання)'] || p['Фото'] || p['Image']}" class="card-img" alt="Фото">` : ''}
+                        <div class="card-body">
+                            <span class="card-badge">${p['Категорія'] || 'Бар / Тусовка'}</span>
+                            <div class="card-title">${p['Назва закладу'] || p['Назва'] || ''}</div>
+                            <div class="card-desc">${p['Опис / Вайб'] || p['Опис'] || ''}</div>
+                            <div class="card-meta">📍 ${p['Адреса'] || 'Львів'}</div>
+                            ${(p['Графік'] || p['Час роботи']) ? `<div class="card-meta" style="margin-top: 4px; color: #d084ff;">🕒 ${p['Графік'] || p['Час роботи']}</div>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+
+            } else {
+                const events = dbData['Події'] || [];
+
+                if (events.length === 0) {
+                    container.innerHTML = '<div class="loader">Афіша поки порожня 🎉</div>';
+                    return;
+                }
+
+                container.innerHTML = events.map((e, idx) => `
+                    <div class="card" onclick="openEventModal(${idx})">
+                        ${e['Афіша (посилання)'] || e['Фото'] ? `<img src="${e['Афіша (посилання)'] || e['Фото']}" class="card-img" alt="Афіша">` : ''}
+                        <div class="card-body">
+                            <span class="card-badge">📅 ${e['Дата та час'] || 'Незабаром'}</span>
+                            <div class="card-title">${e['Назва події'] || e['Назва'] || ''}</div>
+                            <div class="card-meta">🏛 ${e['Заклад'] || e['Локація'] || ''}</div>
+                            <div class="card-desc">${e['Опис події'] || e['Опис'] || ''}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // 4. Відкриття деталей закладу у модальному вікні
+        function openPlaceModal(idx) {
+            const places = dbData['Заклади'] || dbData['заклади'] || [];
+            const p = places[idx];
+            if (!p) return;
+
+            document.getElementById('modal-badge').innerText = p['Категорія'] || p['Type'] || 'Заклад';
+            document.getElementById('modal-title').innerText = p['Назва закладу'] || p['Назва'] || 'Без назви';
+            
+            const address = p['Адреса'] || 'Львів';
+            const schedule = p['Графік'] || p['Час роботи'] || '';
+            let metaHtml = `📍 ${address}`;
+            if (schedule) {
+                metaHtml += `<br>🕒 ${schedule}`;
+            }
+            document.getElementById('modal-meta').innerHTML = metaHtml;
+
+            document.getElementById('modal-desc').innerText = p['Опис / Вайб'] || p['Опис'] || '';
+            
+            // Пошук та виведення подій цього закладу
+            const venueName = (p['Назва закладу'] || p['Назва'] || '').toLowerCase().trim();
+            const allEvents = dbData['Події'] || [];
+            
+            const venueEvents = allEvents.filter(e => {
+                const eventVenue = String(e['Заклад'] || e['Локація'] || '').toLowerCase().trim();
+                return eventVenue !== '' && (eventVenue.includes(venueName) || venueName.includes(eventVenue));
+            });
+
+            const eventsContainer = document.getElementById('modal-events-list');
+
+            if (venueEvents.length > 0) {
+                eventsContainer.innerHTML = `
+                    <div class="venue-events-section">
+                        <div class="venue-events-title">🎉 Афіша подій у закладі:</div>
+                        <div class="venue-events-scroll">
+                            ${venueEvents.map(e => {
+                                const eventPhoto = e['Афіша (посилання)'] || e['Фото'] || '';
+                                const eventDesc = e['Опис події'] || e['Опис'] || '';
+                                return `
+                                    <div class="venue-event-card">
+                                        ${eventPhoto ? `<img src="${eventPhoto}" class="venue-event-img" alt="Афіша події">` : ''}
+                                        <div class="venue-event-body">
+                                            <div class="venue-event-name">${e['Назва події'] || e['Назва'] || ''}</div>
+                                            <div class="venue-event-time">📅 ${e['Дата та час'] || 'Незабаром'}</div>
+                                            ${eventDesc ? `<div class="venue-event-desc">${eventDesc}</div>` : ''}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                eventsContainer.innerHTML = '';
+            }
+
+            const img = document.getElementById('modal-img');
+            const photoUrl = p['Фото (посилання)'] || p['Фото'] || p['Image'];
+            if (photoUrl) {
+                img.src = photoUrl;
+                img.style.display = 'block';
+            } else {
+                img.style.display = 'none';
+            }
+
+            const btn = document.getElementById('modal-btn');
+            const mapUrl = p['Карта'] || p['Посилання на карту'] || p['Google Maps'];
+
+            if (mapUrl && String(mapUrl).trim() !== '') {
+                btn.href = mapUrl;
+                btn.innerText = '🗺 Відкрити в Google Maps';
+                btn.style.display = 'block';
+            } else if (p['Адреса']) {
+                btn.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p['Адреса'] + ', Львів')}`;
+                btn.innerText = '🗺 Шукати адресу на карті';
+                btn.style.display = 'block';
+            } else {
+                btn.style.display = 'none';
+            }
+
+            document.getElementById('modal').classList.add('open');
+        }
+
+        // 5. Відкриття деталей події у модальному вікні
+        function openEventModal(idx) {
+            const events = dbData['Події'] || [];
+            const e = events[idx];
+            if (!e) return;
+
+            document.getElementById('modal-badge').innerText = `📅 ${e['Дата та час'] || 'Незабаром'}`;
+            document.getElementById('modal-title').innerText = e['Назва події'] || e['Назва'] || '';
+            document.getElementById('modal-meta').innerHTML = `🏛 ${e['Заклад'] || e['Локація'] || ''}`;
+            document.getElementById('modal-desc').innerText = e['Опис події'] || e['Опис'] || '';
+            document.getElementById('modal-events-list').innerHTML = '';
+
+            const img = document.getElementById('modal-img');
+            const photoUrl = e['Афіша (посилання)'] || e['Фото'];
+            if (photoUrl) {
+                img.src = photoUrl;
+                img.style.display = 'block';
+            } else {
+                img.style.display = 'none';
+            }
+
+            const btn = document.getElementById('modal-btn');
+            const ticketUrl = e['Квитки'] || e['Посилання'];
+            if (ticketUrl) {
+                btn.href = ticketUrl;
+                btn.innerText = '🎟 Придбати квитки / Детальніше';
+                btn.style.display = 'block';
+            } else {
+                btn.style.display = 'none';
+            }
+
+            document.getElementById('modal').classList.add('open');
+        }
+
+        function closeModal(e) {
+            if (!e || e.target.classList.contains('modal-overlay') || e.target.classList.contains('modal-close')) {
+                document.getElementById('modal').classList.remove('open');
+            }
+        }
+
+        // 6. Логіка мапи та динамічних маркерів
+        let map = null;
+        let placeMarkers = [];
+
+        function switchMainTab(tab) {
+            currentTab = tab;
+            document.getElementById('tab-places-btn').className = `main-tab-btn ${tab === 'places' ? 'active' : ''}`;
+            document.getElementById('tab-events-btn').className = `main-tab-btn ${tab === 'events' ? 'active' : ''}`;
+            document.getElementById('tab-map-btn').className = `main-tab-btn ${tab === 'map' ? 'active' : ''}`;
+            
+            document.getElementById('categories-bar').style.display = (tab === 'places' ? 'flex' : 'none');
+            
+            const contentList = document.getElementById('content-list');
+            const mapContainer = document.getElementById('map-container');
+
+            if (tab === 'map') {
+                contentList.style.display = 'none';
+                mapContainer.style.display = 'block';
+                
+                setTimeout(() => {
+                    initMap();
+                    if (map) {
+                        map.invalidateSize();
+                    }
+                }, 150);
+            } else {
+                contentList.style.display = 'grid';
+                mapContainer.style.display = 'none';
+                renderContent();
+            }
+        }
+
+        // Отримуємо смайлики з таблиці
+        function getCategoryIcon(placeData) {
+            const customIcon = placeData['Іконка'] || placeData['Смайлик'] || placeData['Emoji'];
+            
+            if (customIcon && String(customIcon).trim() !== '') {
+                return String(customIcon).trim();
+            }
+            
+            return '🍸';
+        }
+
+        // Створення HTML-коду маркера
+        function createMarkerHtml(venueName, placeData, isLarge) {
+            const icon = getCategoryIcon(placeData);
+            
+            if (isLarge) {
+                return `
+                    <div class="custom-pin-wrapper">
+                        <div class="pin-large">${icon} ${venueName}</div>
+                    </div>
+                `;
+            } else {
+                return `
+                    <div class="custom-pin-wrapper">
+                        <div class="pin-small">${icon}</div>
+                    </div>
+                `;
+            }
+        }
+
+        // Оновлення вигляду маркерів залежно від зуму карти (зум 17)
+        function updateMarkersZoom() {
+            if (!map) return;
+            const isLarge = map.getZoom() >= 17;
+
+            placeMarkers.forEach(item => {
+                const newHtml = createMarkerHtml(item.name, item.placeData, isLarge);
+                const newIcon = L.divIcon({
+                    className: 'venue-marker',
+                    html: newHtml,
+                    iconAnchor: [0, 0]
+                });
+                item.marker.setIcon(newIcon);
+            });
+        }
+
+        function initMap() {
+            const places = dbData['Заклади'] || dbData['заклади'] || [];
+
+            if (!map) {
+                map = L.map('map-container', {
+                    zoomControl: true
+                }).setView([49.842957, 24.031111], 14);
+
+                L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; OpenStreetMap'
+                }).addTo(map);
+
+                // Відстежуємо зміну зуму карти
+                map.on('zoomend', updateMarkersZoom);
+
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const userLat = position.coords.latitude;
+                            const userLng = position.coords.longitude;
+
+                            const userIcon = L.divIcon({
+                                className: 'user-location-marker',
+                                html: '<div style="background:#007aff; width:14px; height:14px; border-radius:50%; border:3px solid #fff; box-shadow:0 0 10px #007aff;"></div>',
+                                iconSize: [14, 14],
+                                iconAnchor: [7, 7]
+                            });
+
+                            L.marker([userLat, userLng], { icon: userIcon })
+                                .addTo(map)
+                                .bindPopup('<b>Ви тут 📍</b>');
+                        },
+                        (err) => console.log('Геолокацію вимкнено')
+                    );
+                }
+            }
+
+            // Очищаємо старі маркери
+            placeMarkers.forEach(item => map.removeLayer(item.marker));
+            placeMarkers = [];
+
+            const isLarge = map.getZoom() >= 17;
+
+            // Рендер закладів
+            places.forEach((p, idx) => {
+                const rawLat = p['Широта'] || p['Lat'] || p['lat'] || p['latitude'] || p['Координати'];
+                const rawLng = p['Довгота'] || p['Lng'] || p['lng'] || p['longitude'];
+
+                let lat = parseFloat(rawLat);
+                let lng = parseFloat(rawLng);
+
+                if (isNaN(lat) && typeof rawLat === 'string' && rawLat.includes(',')) {
+                    const parts = rawLat.split(',');
+                    lat = parseFloat(parts[0]);
+                    lng = parseFloat(parts[1]);
+                }
+
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    const venueName = p['Назва закладу'] || p['Назва'] || 'Заклад';
+                    
+                    const venueIcon = L.divIcon({
+                        className: 'venue-marker',
+                        html: createMarkerHtml(venueName, p, isLarge),
+                        iconAnchor: [0, 0]
+                    });
+
+                    const marker = L.marker([lat, lng], { icon: venueIcon }).addTo(map);
+
+                    marker.on('click', () => {
+                        openPlaceModal(idx);
+                    });
+
+                    placeMarkers.push({ marker, name: venueName, placeData: p });
+                }
+            });
+        }
+
+        function filterPlaces(category, btn) {
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderContent(category);
+        }
+
+        loadData();
+    </script>
+</body>
+</html>
