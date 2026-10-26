@@ -93,7 +93,7 @@ class PartyBot extends TelegramLongPollingBot {
 
         InlineKeyboardButton webAppBtn = new InlineKeyboardButton();
         webAppBtn.setText("🎉 Відкрити Каталог Закладів");
-        webAppBtn.setWebApp(new WebAppInfo("https://skrypkavanek-netizen.github.io/party-in-lviv/"));
+        webAppBtn.setWebApp(new WebAppInfo("https://skrypkavanek-netizen.github.io/main/"));
 
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
