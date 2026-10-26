@@ -71,9 +71,13 @@ class PartyBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
+        // Додаємо лог, який покаже в консолі Render, що бот отримав будь-яке повідомлення
+        System.console().printf("Отримано оновлення від Telegram!\n");
+        
         if (update.hasMessage() && update.getMessage().hasText()) {
             String text = update.getMessage().getText();
             long chatId = update.getMessage().getChatId();
+            System.out.println("Отримано текст: " + text + " від chatId: " + chatId);
 
             if (text.equals("/start")) {
                 sendMiniAppButton(chatId);
@@ -99,6 +103,7 @@ class PartyBot extends TelegramLongPollingBot {
 
         try {
             execute(message);
+            System.out.println("Відповідь на /start успішно надіслана!");
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
