@@ -18,19 +18,20 @@ import org.telegram.telegrambots.meta.api.objects.webapp.WebAppInfo;
 
 public class Main {
     public static void main(String[] args) {
+    // 1. Запускаємо Telegram-бота в окремому потоці, щоб він стабільно опитував Telegram
+    new Thread(() -> {
         try {
-            // 1. Запускаємо Telegram-бота ( PartyBot )
             TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
             botsApi.registerBot(new PartyBot());
-            System.out.println("🤖 Бот успішно запущений!");
-
-            // 2. Піднімаємо HTTP-сервер для Render, щоб він бачив відкритий порт
-            startHttpServer();
-
+            System.out.println("🤖 Telegram-бот успішно зареєстровано і запущено через Long Polling!");
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
+    }).start();
+
+    // 2. Паралельно піднімаємо HTTP-сервер для Render, щоб тримати порт відкритим
+    startHttpServer();
+}
 
     private static void startHttpServer() {
         try {
