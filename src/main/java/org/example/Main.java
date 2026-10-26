@@ -8,8 +8,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.telegram.telegrambots.meta.api.objects.Update;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Main {
     private static final String BOT_TOKEN = "8951171697:AAETY1OCVkwMfh2POyCuNkqIJFFKzU47Mvw";
@@ -17,12 +17,8 @@ public class Main {
 
     public static void main(String[] args) {
         try {
-            // 1. Запускаємо HTTP-сервер для прийому запитів від Render та Telegram
             startHttpServer();
-
-            // 2. Автоматично реєструємо Webhook у Telegram
             registerWebhook();
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -36,14 +32,18 @@ public class Main {
         
         server.createContext("/", exchange -> {
             if ("POST".equalsIgnoreCase(exchange.getRequestMethod())) {
-                // Telegram надсилає оновлення (повідомлення від користувачів) сюди
                 try {
-                    byte[] bodyBytes = exchange.getRequestBody().readAllBytes();
-                    ObjectMapper mapper = new ObjectMapper();
-                    Update update = mapper.readValue(bodyBytes, Update.class);
+                    String requestBody = new String(exchange.getRequestBody().readAllBytes());
                     
-                    // Обробляємо повідомлення
-                    handleUpdate(update);
+                    // Парсимо chatId та text за допомогою легких регулярних виразів без бібліотек
+                    String chatId = extractJsonField(requestBody, "chat", "id");
+                    String text = extractStringField(requestBody, "text");
+
+                    System.out.println("Отримано текст: " + text + " від chatId: " + chatId);
+
+                    if ("/start".equals(text) && chatId != null) {
+                        sendMiniAppButton(chatId);
+                    }
 
                     String response = "OK";
                     exchange.sendResponseHeaders(200, response.getBytes().length);
@@ -56,7 +56,6 @@ public class Main {
                     exchange.close();
                 }
             } else {
-                // GET-запит для перевірки статусу (щоб Render бачив, що сервіс живий)
                 String response = "Bot is running 24/7 via Webhook!";
                 exchange.sendResponseHeaders(200, response.getBytes().length);
                 OutputStream os = exchange.getResponseBody();
@@ -68,6 +67,30 @@ public class Main {
         server.setExecutor(null);
         server.start();
         System.out.println("🌐 HTTP сервер успішно запущено на порті: " + port);
+    }
+
+    private static String extractStringField(String json, String field) {
+        Pattern pattern = Pattern.compile("\"" + field + "\"\\s*:\\s*\"([^\"]+)\"");
+        Matcher matcher = pattern.matcher(json);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return null;
+    }
+
+    private static String extractJsonField(String json, String parentField, String field) {
+        Pattern pattern = Pattern.compile("\"" + parentField + "\"\\s*:\\\\?s*\\{[^}]*\"" + field + "\"\\s*:\\s*(-?\\d+)");
+        Matcher matcher = pattern.matcher(json);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        // Запасний варіант для простого пошуку ID
+        Pattern patternSimple = Pattern.compile("\"" + field + "\"\\s*:\\s*(-?\\d+)");
+        Matcher matcherSimple = patternSimple.matcher(json);
+        if (matcherSimple.find()) {
+            return matcherSimple.group(1);
+        }
+        return null;
     }
 
     private static void registerWebhook() {
@@ -85,28 +108,15 @@ public class Main {
         }
     }
 
-    private static void handleUpdate(Update update) {
-        if (update.hasMessage() && update.getMessage().hasText()) {
-            String text = update.getMessage().getText();
-            long chatId = update.getMessage().getChatId();
-            System.out.println("Отримано текст: " + text + " від chatId: " + chatId);
-
-            if (text.equals("/start")) {
-                sendMiniAppButton(chatId);
-            }
-        }
-    }
-
-    private static void sendMiniAppButton(long chatId) {
+    private static void sendMiniAppButton(String chatId) {
         try {
-            // Формуємо JSON для відправки повідомлення з WebApp кнопкою через офіційне API Telegram
             String jsonBody = "{" +
                     "\"chat_id\":\"" + chatId + "\"," +
                     "\"text\":\"Вітаємо у тусовелі Львова! 🍸\\nНатисни кнопку нижче, щоб відкрити каталог закладів:\"," +
                     "\"reply_markup\":{" +
                         "\"inline_keyboard\":[[{" +
                             "\"text\":\"🎉 Відкрити Каталог Закладів\"," +
-                            "web_app":{"url":"https://skrypkavanek-netizen.github.io/lviv-party-bot/"}
+                            "\"web_app\":{\"url\":\"https://skrypkavanek-netizen.github.io/lviv-party-bot/\"}" +
                         "}]]" +
                     "}" +
                 "}";
