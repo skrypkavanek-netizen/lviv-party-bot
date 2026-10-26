@@ -31,15 +31,33 @@ public class Main {
         HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
         
         server.createContext("/", exchange -> {
-            if ("POST".equalsIgnoreCase(exchange.getRequestMethod())) {
+            String method = exchange.getRequestMethod();
+            
+            // Якщо це GET-запит (наприклад, від UptimeRobot або браузера)
+            if ("GET".equalsIgnoreCase(method)) {
+                String response = "Lviv Party Bot is active and running 24/7! 🍸";
+                exchange.sendResponseHeaders(200, response.getBytes().length);
+                OutputStream os = exchange.getResponseBody();
+                os.write(response.getBytes());
+                os.close();
+                return;
+            }
+
+            // Якщо це POST-запит від Telegram
+            if ("POST".equalsIgnoreCase(method)) {
                 try {
                     String requestBody = new String(exchange.getRequestBody().readAllBytes());
                     
-                    // Парсимо chatId та text за допомогою легких регулярних виразів без бібліотек
+                    // Безпечний парсинг з перевіркою на null
                     String chatId = extractJsonField(requestBody, "chat", "id");
                     String text = extractStringField(requestBody, "text");
 
-                    System.out.println("Отримано текст: " + text + " від chatId: " + chatId);
+                    // Якщо текст відсутній (наприклад, користувач надіслав стікер, фото чи натиснув кнопку)
+                    if (text == null) {
+                        text = "";
+                    }
+
+                    System.out.println("Отримано запит. Текст: '" + text + "' від chatId: " + chatId);
 
                     if ("/start".equals(text) && chatId != null) {
                         sendMiniAppButton(chatId);
@@ -51,19 +69,18 @@ public class Main {
                     os.write(response.getBytes());
                     os.close();
                 } catch (Exception e) {
-                    e.printStackTrace();
-                    exchange.sendResponseHeaders(500, 0);
-                    exchange.close();
+                    System.err.println("Помилка при обробці повідомлення від Telegram: " + e.getMessage());
+                    String response = "Internal Error";
+                    exchange.sendResponseHeaders(500, response.getBytes().length);
+                    OutputStream os = exchange.getResponseBody();
+                    os.write(response.getBytes());
+                    os.close();
                 }
             } else {
-                String response = "Bot is running 24/7 via Webhook!";
-                exchange.sendResponseHeaders(200, response.getBytes().length);
-                OutputStream os = exchange.getResponseBody();
-                os.write(response.getBytes());
-                os.close();
+                exchange.sendResponseHeaders(405, 0); // Method Not Allowed
+                exchange.close();
             }
         });
-
         server.setExecutor(null);
         server.start();
         System.out.println("🌐 HTTP сервер успішно запущено на порті: " + port);
