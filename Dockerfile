@@ -6,6 +6,6 @@ RUN mvn clean package -DskipTests
 
 FROM eclipse-temurin:17-jre
 WORKDIR /app
-# Беремо правильний зібраний jar-файл з усіма залежностями
-COPY --from=build /app/target/*-jar-with-dependencies.jar app.jar
+# Копіюємо файл з повним набором залежностей та маніфестом
+COPY --from=build /app/target/LvivPartyBot-1.0-SNAPSHOT-jar-with-dependencies.jar app.jar
 CMD ["java", "-jar", "app.jar"]
