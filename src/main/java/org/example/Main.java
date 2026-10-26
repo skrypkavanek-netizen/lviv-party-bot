@@ -1,26 +1,51 @@
 package org.example;
 
-import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import com.sun.net.httpserver.HttpServer;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
-import org.telegram.telegrambots.meta.api.objects.webapp.WebAppInfo;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
         try {
+            // 1. Запускаємо Telegram-бота
             TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-            botsApi.registerBot(new PartyBot());
-            System.out.println("🤖 Бот успішно запущений!");
-        } catch (TelegramApiException e) {
+            botsApi.registerNewBot(new MyTelegramBot()); // Замініть на назву вашого класу бота
+            System.out.println("Бот успішно запущені!");
+
+            // 2. Піднімаємо вебсервер для Render, щоб він бачив відкритий порт
+            startHttpServer();
+
+        } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private static void startHttpServer() {
+        try {
+            // Render передає порт через змінну середовища PORT, за замовчуванням беремо 8080
+            String portStr = System.getenv("PORT");
+            int port = (portStr != null && !portStr.isEmpty()) ? Integer.parseInt(portStr) : 8080;
+
+            HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
+            
+            // Створюємо простий ендпоїнт для перевірки статусу ( health check )
+            server.createContext("/", exchange -> {
+                String response = "Bot is running 24/7!";
+                exchange.sendResponseHeaders(200, response.getBytes().length);
+                OutputStream os = exchange.getResponseBody();
+                os.write(response.getBytes());
+                os.close();
+            });
+
+            server.setExecutor(null); // створюємо стандартний екзекютор
+            server.start();
+            System.out.println("HTTP сервер успішно запущено на порті: " + port);
+
+        } catch (IOException e) {
+            System.err.println("Помилка запуску HTTP сервера: " + e.getMessage());
         }
     }
 }
