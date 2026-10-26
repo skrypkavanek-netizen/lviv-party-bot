@@ -106,7 +106,7 @@ public class Main {
                     "\"reply_markup\":{" +
                         "\"inline_keyboard\":[[{" +
                             "\"text\":\"🎉 Відкрити Каталог Закладів\"," +
-                            "\"web_app\":{\"url\":\"https://skrypkavanek-netizen.github.io/party-in-lviv/\"}" +
+                            "web_app":{"url":"https://skrypkavanek-netizen.github.io/lviv-party-bot/"}
                         "}]]" +
                     "}" +
                 "}";
