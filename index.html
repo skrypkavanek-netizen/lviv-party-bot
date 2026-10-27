@@ -183,7 +183,6 @@
             transform: translate(-50%, -100%);
         }
 
-        /* Маленька іконка (тільки смайлики) */
         .pin-small {
             background: linear-gradient(135deg, #a855f7, #7e22ce);
             width: 36px;
@@ -210,7 +209,6 @@
             border-color: #7e22ce transparent transparent transparent;
         }
 
-        /* Велика кнопка з назвою та смайликами */
         .pin-large {
             background: linear-gradient(135deg, #a855f7, #7e22ce);
             color: #ffffff;
@@ -239,7 +237,6 @@
             border-color: #7e22ce transparent transparent transparent;
         }
 
-        /* Стилі для списку подій у модалці закладу (з картинками та прокруткою) */
         .venue-events-section {
             margin-top: 16px;
             padding-top: 16px;
@@ -254,7 +251,7 @@
         }
 
         .venue-events-scroll {
-            max-height: 260px; /* Висота вікна, після якої з'явиться скрол */
+            max-height: 260px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
@@ -526,17 +523,29 @@
                     return;
                 }
 
-                container.innerHTML = events.map((e, idx) => `
-                    <div class="card" onclick="openEventModal(${idx})">
-                        ${e['Афіша (посилання)'] || e['Фото'] ? `<img src="${e['Афіша (посилання)'] || e['Фото']}" class="card-img" alt="Афіша">` : ''}
-                        <div class="card-body">
-                            <span class="card-badge">📅 ${e['Дата та час'] || 'Незабаром'}</span>
-                            <div class="card-title">${e['Назва події'] || e['Назва'] || ''}</div>
-                            <div class="card-meta">🏛 ${e['Заклад'] || e['Локація'] || ''}</div>
-                            <div class="card-desc">${e['Опис події'] || e['Опис'] || ''}</div>
+                container.innerHTML = events.map((e, idx) => {
+                    const priceText = String(e['Ціна при вході'] || '').trim();
+                    let priceHtml = '';
+                    
+                    if (priceText.toLowerCase().includes('вільний') || priceText.toLowerCase().includes('free')) {
+                        priceHtml = `<div class="card-meta" style="color: #4CAF50; font-weight: bold;">🟢 Вхід вільний</div>`;
+                    } else if (priceText !== '') {
+                        priceHtml = `<div class="card-meta" style="color: #d084ff; font-weight: bold;">💵 Ціна: ${priceText} грн</div>`;
+                    }
+
+                    return `
+                        <div class="card" onclick="openEventModal(${idx})">
+                            ${e['Афіша (посилання)'] || e['Фото'] ? `<img src="${e['Афіша (посилання)'] || e['Фото']}" class="card-img" alt="Афіша">` : ''}
+                            <div class="card-body">
+                                <span class="card-badge">📅 ${e['Дата та час'] || 'Незабаром'}</span>
+                                <div class="card-title">${e['Назва події'] || e['Назва'] || ''}</div>
+                                <div class="card-meta">🏛 ${e['Заклад'] || e['Локація'] || ''}</div>
+                                ${priceHtml}
+                                <div class="card-desc" style="margin-top: 6px;">${e['Опис події'] || e['Опис'] || ''}</div>
+                            </div>
                         </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             }
         }
 
@@ -559,7 +568,6 @@
 
             document.getElementById('modal-desc').innerText = p['Опис / Вайб'] || p['Опис'] || '';
             
-            // Пошук та виведення подій цього закладу
             const venueName = (p['Назва закладу'] || p['Назва'] || '').toLowerCase().trim();
             const allEvents = dbData['Події'] || [];
             
@@ -631,7 +639,14 @@
 
             document.getElementById('modal-badge').innerText = `📅 ${e['Дата та час'] || 'Незабаром'}`;
             document.getElementById('modal-title').innerText = e['Назва події'] || e['Назва'] || '';
-            document.getElementById('modal-meta').innerHTML = `🏛 ${e['Заклад'] || e['Локація'] || ''}`;
+            
+            const priceText = String(e['Ціна при вході'] || '').trim();
+            let priceInfo = '';
+            if (priceText !== '') {
+                priceInfo = priceText.toLowerCase().includes('вільний') ? '<br>🟢 Вхід вільний' : `<br>💵 Ціна: ${priceText} грн`;
+            }
+
+            document.getElementById('modal-meta').innerHTML = `🏛 ${e['Заклад'] || e['Локація'] || ''}${priceInfo}`;
             document.getElementById('modal-desc').innerText = e['Опис події'] || e['Опис'] || '';
             document.getElementById('modal-events-list').innerHTML = '';
 
@@ -645,13 +660,35 @@
             }
 
             const btn = document.getElementById('modal-btn');
-            const ticketUrl = e['Квитки'] || e['Посилання'];
-            if (ticketUrl) {
+            const ticketUrl = String(e['Квитки'] || '').trim();
+            
+            // Сценарій 1 & 3: Якщо є посилання у стовпчику "Квитки" — виводимо кнопку купівлі квитків
+            if (ticketUrl !== '' && ticketUrl.startsWith('http')) {
                 btn.href = ticketUrl;
-                btn.innerText = '🎟 Придбати квитки / Детальніше';
+                btn.innerText = '🎟 Придбати квитки';
                 btn.style.display = 'block';
             } else {
-                btn.style.display = 'none';
+                // Якщо посилання на квитки немає, шукаємо відповідний заклад, щоб дати посилання на нього (Сценарій 1)
+                const eventVenueName = String(e['Заклад'] || '').toLowerCase().trim();
+                const places = dbData['Заклади'] || [];
+                const matchedPlace = places.find(p => {
+                    const pName = String(p['Назва закладу'] || p['Назва'] || '').toLowerCase().trim();
+                    return pName !== '' && (eventVenueName.includes(pName) || pName.includes(eventVenueName));
+                });
+
+                const placeMapUrl = matchedPlace ? (matchedPlace['Карта'] || matchedPlace['Посилання на карту'] || matchedPlace['Google Maps']) : '';
+
+                if (placeMapUrl && String(placeMapUrl).trim() !== '') {
+                    btn.href = placeMapUrl;
+                    btn.innerText = '📍 Переглянути заклад на мапі';
+                    btn.style.display = 'block';
+                } else if (matchedPlace && matchedPlace['Адреса']) {
+                    btn.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(matchedPlace['Адреса'] + ', Львів')}`;
+                    btn.innerText = '📍 Адреса закладу';
+                    btn.style.display = 'block';
+                } else {
+                    btn.style.display = 'none'; // Якщо посилань немає ніде — ховаємо кнопку
+                }
             }
 
             document.getElementById('modal').classList.add('open');
@@ -695,21 +732,16 @@
             }
         }
 
-        // Отримуємо смайлики з таблиці
         function getCategoryIcon(placeData) {
             const customIcon = placeData['Іконка'] || placeData['Смайлик'] || placeData['Emoji'];
-            
             if (customIcon && String(customIcon).trim() !== '') {
                 return String(customIcon).trim();
             }
-            
             return '🍸';
         }
 
-        // Створення HTML-коду маркера
         function createMarkerHtml(venueName, placeData, isLarge) {
             const icon = getCategoryIcon(placeData);
-            
             if (isLarge) {
                 return `
                     <div class="custom-pin-wrapper">
@@ -725,7 +757,6 @@
             }
         }
 
-        // Оновлення вигляду маркерів залежно від зуму карти (зум 17)
         function updateMarkersZoom() {
             if (!map) return;
             const isLarge = map.getZoom() >= 17;
@@ -754,7 +785,6 @@
                     attribution: '&copy; OpenStreetMap'
                 }).addTo(map);
 
-                // Відстежуємо зміну зуму карти
                 map.on('zoomend', updateMarkersZoom);
 
                 if (navigator.geolocation) {
@@ -779,13 +809,11 @@
                 }
             }
 
-            // Очищаємо старі маркери
             placeMarkers.forEach(item => map.removeLayer(item.marker));
             placeMarkers = [];
 
             const isLarge = map.getZoom() >= 17;
 
-            // Рендер закладів
             places.forEach((p, idx) => {
                 const rawLat = p['Широта'] || p['Lat'] || p['lat'] || p['latitude'] || p['Координати'];
                 const rawLng = p['Довгота'] || p['Lng'] || p['lng'] || p['longitude'];
