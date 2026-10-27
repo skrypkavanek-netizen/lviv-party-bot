@@ -14,28 +14,36 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0d0714; color: #f3effa; padding: 16px; padding-bottom: 40px; }
         h1 { font-size: 22px; text-align: center; margin-bottom: 16px; color: #d084ff; text-shadow: 0 0 12px rgba(187, 107, 255, 0.4); }
-        .main-tabs { display: flex; background: rgba(35, 18, 56, 0.7); padding: 4px; border-radius: 14px; margin-bottom: 16px; border: 1px solid rgba(187, 107, 255, 0.2); backdrop-filter: blur(10px); }
-        .main-tab-btn { flex: 1; padding: 10px; border: none; background: transparent; color: #a491bc; font-size: 14px; font-weight: bold; border-radius: 10px; cursor: pointer; transition: all 0.25s ease; }
+        .main-tabs { display: flex; background: rgba(35, 18, 56, 0.7); padding: 4px; border-radius: 14px; margin-bottom: 16px; border: 1px solid rgba(187, 107, 255, 0.2); backdrop-filter: blur(10px); gap: 4px; }
+        .main-tab-btn { flex: 1; padding: 8px 4px; border: none; background: transparent; color: #a491bc; font-size: 13px; font-weight: bold; border-radius: 10px; cursor: pointer; transition: all 0.25s ease; text-align: center; }
         .main-tab-btn.active { background: linear-gradient(135deg, #a855f7, #7e22ce); color: #ffffff; box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4); }
         .categories { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 16px; }
         .categories::-webkit-scrollbar { display: none; }
         .cat-btn { background: rgba(35, 18, 56, 0.6); color: #a491bc; border: 1px solid rgba(187, 107, 255, 0.2); padding: 8px 14px; border-radius: 20px; white-space: nowrap; font-size: 13px; font-weight: 500; cursor: pointer; }
         .cat-btn.active { background: #a855f7; color: #ffffff; border-color: #a855f7; box-shadow: 0 2px 8px rgba(168, 85, 247, 0.3); }
         .cards-grid { display: grid; gap: 16px; }
-        .card { background: rgba(28, 15, 46, 0.7); border-radius: 16px; overflow: hidden; border: 1px solid rgba(187, 107, 255, 0.15); backdrop-filter: blur(8px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); cursor: pointer; transition: transform 0.2s ease; }
+        .card { background: rgba(28, 15, 46, 0.7); border-radius: 16px; overflow: hidden; border: 1px solid rgba(187, 107, 255, 0.15); backdrop-filter: blur(8px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); cursor: pointer; transition: transform 0.2s ease; position: relative; }
         .card:active { transform: scale(0.98); }
         .card-img { width: 100%; height: 160px; object-fit: cover; display: block; }
         .card-body { padding: 14px 16px 16px 16px; }
+        
+        /* Кнопка обраного (сердечко) */
+        .fav-btn { position: absolute; top: 12px; right: 12px; background: rgba(13, 7, 20, 0.7); border: 1px solid rgba(187, 107, 255, 0.3); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; z-index: 10; backdrop-filter: blur(6px); transition: all 0.2s ease; }
+        .fav-btn:hover { transform: scale(1.1); }
+        .fav-btn.active { color: #ff3366; border-color: #ff3366; background: rgba(255, 51, 102, 0.15); }
+
         .card-badge { display: inline-block; background: rgba(168, 85, 247, 0.2); color: #d084ff; font-size: 11px; font-weight: bold; padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(168, 85, 247, 0.3); }
         .card-title { font-size: 18px; font-weight: bold; margin-bottom: 6px; color: #ffffff; }
         .card-desc { font-size: 13px; color: #bfaed9; margin-bottom: 10px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .card-meta { font-size: 12px; color: #8c76ab; display: flex; align-items: center; gap: 4px; margin-top: 6px; }
+        
         .leaflet-div-icon { background: transparent !important; border: none !important; }
         .custom-pin-wrapper { position: relative; display: flex; flex-direction: column; align-items: center; cursor: pointer; transform: translate(-50%, -100%); }
         .pin-small { background: linear-gradient(135deg, #a855f7, #7e22ce); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 4px 12px rgba(168, 85, 247, 0.6); border: 2px solid #ffffff; position: relative; }
         .pin-small::after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); border-width: 6px 5px 0 5px; border-style: solid; border-color: #7e22ce transparent transparent transparent; }
         .pin-large { background: linear-gradient(135deg, #a855f7, #7e22ce); color: #ffffff; padding: 6px 12px; border-radius: 14px; font-weight: 600; font-size: 12px; white-space: nowrap; box-shadow: 0 4px 12px rgba(168, 85, 247, 0.6); border: 1.5px solid #ffffff; position: relative; display: flex; align-items: center; gap: 4px; }
         .pin-large::after { content: ''; position: absolute; bottom: -7px; left: 50%; transform: translateX(-50%); border-width: 7px 6px 0 6px; border-style: solid; border-color: #7e22ce transparent transparent transparent; }
+        
         .venue-events-section { margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(187, 107, 255, 0.2); }
         .venue-events-title { font-size: 15px; font-weight: bold; color: #d084ff; margin-bottom: 12px; }
         .venue-events-scroll { max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 4px; }
@@ -47,6 +55,7 @@
         .venue-event-name { font-weight: bold; font-size: 15px; color: #ffffff; margin-bottom: 4px; }
         .venue-event-time { font-size: 12px; color: #d084ff; margin-bottom: 6px; }
         .venue-event-desc { font-size: 12px; color: #bfaed9; line-height: 1.4; }
+        
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(10, 5, 18, 0.85); backdrop-filter: blur(12px); display: flex; justify-content: center; align-items: flex-end; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
         .modal-overlay.open { opacity: 1; pointer-events: auto; }
         .modal-content { background: #180c29; width: 100%; max-height: 85vh; border-top-left-radius: 24px; border-top-right-radius: 24px; padding: 20px; overflow-y: auto; border-top: 1px solid rgba(187, 107, 255, 0.3); box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.8); transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.1, 0.9, 0.2, 1); }
@@ -62,12 +71,15 @@
 
     <h1>🍸 Тусовель Львова</h1>
 
+    <!-- Головні вкладки (додано вкладку Обране) -->
     <div class="main-tabs">
         <button id="tab-places-btn" class="main-tab-btn active" onclick="switchMainTab('places')">🥂 Заклади</button>
-        <button id="tab-events-btn" class="main-tab-btn" onclick="switchMainTab('events')">🎉 Афіша подій</button>
+        <button id="tab-events-btn" class="main-tab-btn" onclick="switchMainTab('events')">🎉 Події</button>
         <button id="tab-map-btn" class="main-tab-btn" onclick="switchMainTab('map')">🗺 Мапа</button>
+        <button id="tab-favs-btn" class="main-tab-btn" onclick="switchMainTab('favorites')">⭐ Обране</button>
     </div>
 
+    <!-- Категорії (тільки для закладів) -->
     <div id="categories-bar" class="categories">
         <button class="cat-btn active" onclick="filterPlaces('all', this)">🔥 Усі</button>
         <button class="cat-btn" onclick="filterPlaces('Бар', this)">🍻 Бари / Пиво</button>
@@ -81,6 +93,7 @@
         <div class="loader">⏳ Завантаження тусовок...</div>
     </div>
 
+    <!-- Модальне вікно -->
     <div id="modal" class="modal-overlay" onclick="closeModal(event)">
         <div class="modal-content" onclick="event.stopPropagation()">
             <div class="modal-header">
@@ -102,6 +115,33 @@
         const API_URL = "https://script.google.com/macros/s/AKfycbzHkKm2jhWes-KrKUcY5w7Yq5gCvp4ELum8sprFGfER20Tl6Ar2t21ghziV_M8AUUcBbg/exec";
         let dbData = { Заклади: [], Події: [] };
         let currentTab = 'places';
+
+        // Робота з localStorage для Обраного
+        function getFavorites() {
+            try {
+                return JSON.parse(localStorage.getItem('lviv_party_favs') || '[]');
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function toggleFavorite(type, id, event) {
+            event.stopPropagation(); // Зупиняємо відкриття модалки при кліку на серце
+            let favs = getFavorites();
+            const index = favs.findIndex(f => f.type === type && f.id === id);
+            
+            if (index > -1) {
+                favs.splice(index, 1);
+            } else {
+                favs.push({ type, id });
+            }
+            localStorage.setItem('lviv_party_favs', JSON.stringify(favs));
+            renderContent(); // Оновлюємо вигляд, щоб перемкнути колір серця
+        }
+
+        function isFavorite(type, id) {
+            return getFavorites().some(f => f.type === type && f.id === id);
+        }
 
         if (window.Telegram && window.Telegram.WebApp) {
             const tg = window.Telegram.WebApp;
@@ -130,6 +170,60 @@
         function renderContent(filterCategory = 'all') {
             const container = document.getElementById('content-list');
             
+            if (currentTab === 'favorites') {
+                const favs = getFavorites();
+                const places = dbData['Заклади'] || dbData['заклади'] || [];
+                const events = dbData['Події'] || [];
+                
+                let html = '';
+                
+                favs.forEach(fav => {
+                    if (fav.type === 'place') {
+                        const p = places[fav.id];
+                        if (p) {
+                            html += `
+                                <div class="card" onclick="openPlaceModal(${fav.id})">
+                                    <div class="fav-btn active" onclick="toggleFavorite('place', ${fav.id}, event)">♥</div>
+                                    ${(p['Фото (посилання)'] || p['Фото'] || p['Image']) ? `<img src="${p['Фото (посилання)'] || p['Фото'] || p['Image']}" class="card-img" alt="Фото">` : ''}
+                                    <div class="card-body">
+                                        <span class="card-badge">${p['Категорія'] || 'Бар / Тусовка'}</span>
+                                        <div class="card-title">${p['Назва закладу'] || p['Назва'] || ''}</div>
+                                        <div class="card-desc">${p['Опис / Вайб'] || p['Опис'] || ''}</div>
+                                        <div class="card-meta">📍 ${p['Адреса'] || 'Львів'}</div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    } else if (fav.type === 'event') {
+                        const e = events[fav.id];
+                        if (e) {
+                            const price = e['Ціна'] || e['Ціна при вході'] || e['Вартість'] || '';
+                            html += `
+                                <div class="card" onclick="openEventModal(${fav.id})">
+                                    <div class="fav-btn active" onclick="toggleFavorite('event', ${fav.id}, event)">♥</div>
+                                    ${e['Афіша (посилання)'] || e['Фото'] ? `<img src="${e['Афіша (посилання)'] || e['Фото']}" class="card-img" alt="Афіша">` : ''}
+                                    <div class="card-body">
+                                        <div style="display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap;">
+                                            <span class="card-badge">📅 ${e['Дата та час'] || 'Незабаром'}</span>
+                                            <span class="card-badge" style="background: rgba(212, 143, 255, 0.15); border-color: rgba(212, 143, 255, 0.3); color: #e8c5ff;">💵 ${price ? price : 'Ціна'}</span>
+                                        </div>
+                                        <div class="card-title">${e['Назва події'] || e['Назва'] || ''}</div>
+                                        <div class="card-meta">🏛 ${e['Заклад'] || e['Локація'] || ''}</div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    }
+                });
+
+                if (html === '') {
+                    container.innerHTML = '<div class="loader">У вас ще немає збережених закладів чи подій ⭐<br>Натискайте сердечко на картках!</div>';
+                } else {
+                    container.innerHTML = html;
+                }
+                return;
+            }
+
             if (currentTab === 'places') {
                 let places = dbData['Заклади'] || dbData['заклади'] || [];
                 if (filterCategory !== 'all') {
@@ -142,18 +236,22 @@
                     container.innerHTML = '<div class="loader">Закладів не знайдено 😔</div>';
                     return;
                 }
-                container.innerHTML = places.map((p, idx) => `
-                    <div class="card" onclick="openPlaceModal(${idx})">
-                        ${(p['Фото (посилання)'] || p['Фото'] || p['Image']) ? `<img src="${p['Фото (посилання)'] || p['Фото'] || p['Image']}" class="card-img" alt="Фото">` : ''}
-                        <div class="card-body">
-                            <span class="card-badge">${p['Категорія'] || 'Бар / Тусовка'}</span>
-                            <div class="card-title">${p['Назва закладу'] || p['Назва'] || ''}</div>
-                            <div class="card-desc">${p['Опис / Вайб'] || p['Опис'] || ''}</div>
-                            <div class="card-meta">📍 ${p['Адреса'] || 'Львів'}</div>
-                            ${(p['Графік'] || p['Час роботи']) ? `<div class="card-meta" style="margin-top: 4px; color: #d084ff;">🕒 ${p['Графік'] || p['Час роботи']}</div>` : ''}
+                container.innerHTML = places.map((p, idx) => {
+                    const isFav = isFavorite('place', idx);
+                    return `
+                        <div class="card" onclick="openPlaceModal(${idx})">
+                            <div class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite('place', ${idx}, event)">${isFav ? '♥' : '♡'}</div>
+                            ${(p['Фото (посилання)'] || p['Фото'] || p['Image']) ? `<img src="${p['Фото (посилання)'] || p['Фото'] || p['Image']}" class="card-img" alt="Фото">` : ''}
+                            <div class="card-body">
+                                <span class="card-badge">${p['Категорія'] || 'Бар / Тусовка'}</span>
+                                <div class="card-title">${p['Назва закладу'] || p['Назва'] || ''}</div>
+                                <div class="card-desc">${p['Опис / Вайб'] || p['Опис'] || ''}</div>
+                                <div class="card-meta">📍 ${p['Адреса'] || 'Львів'}</div>
+                                ${(p['Графік'] || p['Час роботи']) ? `<div class="card-meta" style="margin-top: 4px; color: #d084ff;">🕒 ${p['Графік'] || p['Час роботи']}</div>` : ''}
+                            </div>
                         </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             } else {
                 const events = dbData['Події'] || [];
                 if (events.length === 0) {
@@ -162,8 +260,10 @@
                 }
                 container.innerHTML = events.map((e, idx) => {
                     const price = e['Ціна'] || e['Ціна при вході'] || e['Вартість'] || '';
+                    const isFav = isFavorite('event', idx);
                     return `
                         <div class="card" onclick="openEventModal(${idx})">
+                            <div class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite('event', ${idx}, event)">${isFav ? '♥' : '♡'}</div>
                             ${e['Афіша (посилання)'] || e['Фото'] ? `<img src="${e['Афіша (посилання)'] || e['Фото']}" class="card-img" alt="Афіша">` : ''}
                             <div class="card-body">
                                 <div style="display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap;">
@@ -281,6 +381,8 @@
             document.getElementById('tab-places-btn').className = `main-tab-btn ${tab === 'places' ? 'active' : ''}`;
             document.getElementById('tab-events-btn').className = `main-tab-btn ${tab === 'events' ? 'active' : ''}`;
             document.getElementById('tab-map-btn').className = `main-tab-btn ${tab === 'map' ? 'active' : ''}`;
+            document.getElementById('tab-favs-btn').className = `main-tab-btn ${tab === 'favorites' ? 'active' : ''}`;
+            
             document.getElementById('categories-bar').style.display = (tab === 'places' ? 'flex' : 'none');
             
             const contentList = document.getElementById('content-list');
