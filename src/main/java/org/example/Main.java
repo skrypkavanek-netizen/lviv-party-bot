@@ -127,13 +127,17 @@ public class Main {
 
     private static void sendMiniAppButton(String chatId) {
         try {
+            // Динамічний параметр часу збірки/запуску захищає від застрягання в кеші Telegram
+            long cacheVersion = System.currentTimeMillis();
+            String webAppUrl = "https://skrypkavanek-netizen.github.io/lviv-party-bot/?v=" + cacheVersion;
+
             String jsonBody = "{" +
                     "\"chat_id\":\"" + chatId + "\"," +
                     "\"text\":\"Вітаємо у тусовелі Львова! 🍸\\nНатисни кнопку нижче, щоб відкрити каталог закладів:\"," +
                     "\"reply_markup\":{" +
                         "\"inline_keyboard\":[[{" +
                             "\"text\":\"🎉 Відкрити Каталог Закладів\"," +
-                            "\"web_app\":{\"url\":\"https://skrypkavanek-netizen.github.io/lviv-party-bot/\"}" +
+                            "\"web_app\":{\"url\":\"" + webAppUrl + "\"}" +
                         "}]]" +
                     "}" +
                 "}";
@@ -146,7 +150,7 @@ public class Main {
                     .build();
             
             client.send(request, HttpResponse.BodyHandlers.ofString());
-            System.out.println("Відповідь на /start успішно надіслана!");
+            System.out.println("Відповідь на /start успішно надіслана з версією сайту: " + cacheVersion);
         } catch (Exception e) {
             e.printStackTrace();
         }
