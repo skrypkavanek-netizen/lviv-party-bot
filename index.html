@@ -524,7 +524,8 @@
                 }
 
                 container.innerHTML = events.map((e, idx) => {
-                    const priceText = String(e['Ціна при вході'] || '').trim();
+                    const priceKey = Object.keys(e).find(key => key.toLowerCase().includes('ціна'));
+                    const priceText = priceKey ? String(e[priceKey] || '').trim() : '';
                     let priceHtml = '';
                     
                     if (priceText.toLowerCase().includes('вільний') || priceText.toLowerCase().includes('free')) {
@@ -639,7 +640,8 @@
 
             document.getElementById('modal-badge').innerText = `📅 ${e['Дата та час'] || 'Незабаром'}`;
             document.getElementById('modal-title').innerText = e['Назва події'] || e['Назва'] || '';
-            
+            const priceKey = Object.keys(e).find(key => key.toLowerCase().includes('ціна'));
+            const priceText = priceKey ? String(e[priceKey] || '').trim() : '';
             const priceText = String(e['Ціна при вході'] || '').trim();
             let priceInfo = '';
             if (priceText !== '') {
