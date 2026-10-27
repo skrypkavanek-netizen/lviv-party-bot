@@ -12,9 +12,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Main {
-    private static final String BOT_TOKEN = "8951171697:AAETY1OCVkwMfh2POyCuNkqIJFFKzU47Mvw";
-    private static final String RENDER_URL = "https://lviv-party-bot.onrender.com";
-
+    private static final String BOT_TOKEN = System.getenv("BOT_TOKEN");
+private static final String RENDER_URL = System.getenv("RENDER_URL");
     public static void main(String[] args) {
         try {
             startHttpServer();
