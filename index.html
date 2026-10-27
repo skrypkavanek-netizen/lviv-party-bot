@@ -524,7 +524,7 @@
                 }
 
                 container.innerHTML = events.map((e, idx) => {
-                    const priceText = String(e['Ціна при вході'] || '').trim();
+                    const priceKey = Object.keys(e).find(key => key.toLowerCase().includes('ціна'));
                     const priceText = priceKey ? String(e[priceKey] || '').trim() : '';
                     let priceHtml = '';
                     
@@ -640,9 +640,9 @@
 
             document.getElementById('modal-badge').innerText = `📅 ${e['Дата та час'] || 'Незабаром'}`;
             document.getElementById('modal-title').innerText = e['Назва події'] || e['Назва'] || '';
-            const priceText = String(e['Ціна при вході'] || '').trim();
+            
+            const priceKey = Object.keys(e).find(key => key.toLowerCase().includes('ціна'));
             const priceText = priceKey ? String(e[priceKey] || '').trim() : '';
-            const priceText = String(e['Ціна при вході'] || '').trim();
             let priceInfo = '';
             if (priceText !== '') {
                 priceInfo = priceText.toLowerCase().includes('вільний') ? '<br>🟢 Вхід вільний' : `<br>💵 Ціна: ${priceText} грн`;
@@ -664,13 +664,11 @@
             const btn = document.getElementById('modal-btn');
             const ticketUrl = String(e['Квитки'] || '').trim();
             
-            // Сценарій 1 & 3: Якщо є посилання у стовпчику "Квитки" — виводимо кнопку купівлі квитків
             if (ticketUrl !== '' && ticketUrl.startsWith('http')) {
                 btn.href = ticketUrl;
                 btn.innerText = '🎟 Придбати квитки';
                 btn.style.display = 'block';
             } else {
-                // Якщо посилання на квитки немає, шукаємо відповідний заклад, щоб дати посилання на нього (Сценарій 1)
                 const eventVenueName = String(e['Заклад'] || '').toLowerCase().trim();
                 const places = dbData['Заклади'] || [];
                 const matchedPlace = places.find(p => {
@@ -689,7 +687,7 @@
                     btn.innerText = '📍 Адреса закладу';
                     btn.style.display = 'block';
                 } else {
-                    btn.style.display = 'none'; // Якщо посилань немає ніде — ховаємо кнопку
+                    btn.style.display = 'none';
                 }
             }
 
