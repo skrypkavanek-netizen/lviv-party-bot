@@ -159,7 +159,9 @@
                 }
 
                 container.innerHTML = events.map((e, idx) => {
-                    const priceText = String(e['_price'] !== undefined ? e['_price'] : (e['Ціна при вході'] || '')).trim();
+                    // Безпечний пошук колонки ціни за ключем, якому байдуже на регістр/пробіли
+                    const priceKey = Object.keys(e).find(k => k.toLowerCase().includes('ціна'));
+                    const priceText = priceKey ? String(e[priceKey] || '').trim() : '';
                     let priceHtml = '';
                     
                     if (priceText.toLowerCase().includes('вільний') || priceText.toLowerCase().includes('free')) {
@@ -217,7 +219,8 @@
             document.getElementById('modal-badge').innerText = `📅 ${e['Дата та час'] || 'Незабаром'}`;
             document.getElementById('modal-title').innerText = e['Назва події'] || e['Назва'] || '';
             
-            const priceText = String(e['_price'] !== undefined ? e['_price'] : (e['Ціна при вході'] || '')).trim();
+            const priceKey = Object.keys(e).find(k => k.toLowerCase().includes('ціна'));
+            const priceText = priceKey ? String(e[priceKey] || '').trim() : '';
             let priceInfo = '';
             if (priceText !== '') {
                 priceInfo = priceText.toLowerCase().includes('вільний') ? '<br>🟢 Вхід вільний' : `<br>💵 Ціна: ${priceText} грн`;
@@ -232,15 +235,16 @@
             if (photoUrl) { img.src = photoUrl; img.style.display = 'block'; } else { img.style.display = 'none'; }
 
             const btn = document.getElementById('modal-btn');
-            const ticketUrl = String(e['_tickets'] || '').trim();
             
-            // Якщо у колонці "Квитки" є реальне посилання (http...) — виводимо кнопку купівлі
+            // Шукаємо колонку квитків за частковим збігом слова "квитки"
+            const ticketKey = Object.keys(e).find(k => k.toLowerCase().includes('квитки'));
+            const ticketUrl = ticketKey ? String(e[ticketKey] || '').trim() : '';
+            
             if (ticketUrl !== '' && ticketUrl.startsWith('http')) {
                 btn.href = ticketUrl;
                 btn.innerText = '🎟 Придбати квитки';
                 btn.style.display = 'block';
             } else {
-                // Якщо посилання немає, але вхід вільний — ведемо на мапу закладу
                 const eventVenueName = String(e['Заклад'] || '').toLowerCase().trim();
                 const places = dbData['Заклади'] || [];
                 const matchedPlace = places.find(p => {
