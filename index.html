@@ -17,17 +17,18 @@
         .main-tabs { display: flex; background: rgba(35, 18, 56, 0.7); padding: 4px; border-radius: 14px; margin-bottom: 16px; border: 1px solid rgba(187, 107, 255, 0.2); backdrop-filter: blur(10px); gap: 4px; }
         .main-tab-btn { flex: 1; padding: 8px 4px; border: none; background: transparent; color: #a491bc; font-size: 13px; font-weight: bold; border-radius: 10px; cursor: pointer; transition: all 0.25s ease; text-align: center; }
         .main-tab-btn.active { background: linear-gradient(135deg, #a855f7, #7e22ce); color: #ffffff; box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4); }
+        
         .categories { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 16px; }
         .categories::-webkit-scrollbar { display: none; }
         .cat-btn { background: rgba(35, 18, 56, 0.6); color: #a491bc; border: 1px solid rgba(187, 107, 255, 0.2); padding: 8px 14px; border-radius: 20px; white-space: nowrap; font-size: 13px; font-weight: 500; cursor: pointer; }
         .cat-btn.active { background: #a855f7; color: #ffffff; border-color: #a855f7; box-shadow: 0 2px 8px rgba(168, 85, 247, 0.3); }
+        
         .cards-grid { display: grid; gap: 16px; }
         .card { background: rgba(28, 15, 46, 0.7); border-radius: 16px; overflow: hidden; border: 1px solid rgba(187, 107, 255, 0.15); backdrop-filter: blur(8px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); cursor: pointer; transition: transform 0.2s ease; position: relative; }
         .card:active { transform: scale(0.98); }
         .card-img { width: 100%; height: 160px; object-fit: cover; display: block; }
         .card-body { padding: 14px 16px 16px 16px; }
         
-        /* Кнопка обраного (сердечко) */
         .fav-btn { position: absolute; top: 12px; right: 12px; background: rgba(13, 7, 20, 0.7); border: 1px solid rgba(187, 107, 255, 0.3); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; z-index: 10; backdrop-filter: blur(6px); transition: all 0.2s ease; }
         .fav-btn:hover { transform: scale(1.1); }
         .fav-btn.active { color: #ff3366; border-color: #ff3366; background: rgba(255, 51, 102, 0.15); }
@@ -71,7 +72,6 @@
 
     <h1>🍸 Тусовель Львова</h1>
 
-    <!-- Головні вкладки (додано вкладку Обране) -->
     <div class="main-tabs">
         <button id="tab-places-btn" class="main-tab-btn active" onclick="switchMainTab('places')">🥂 Заклади</button>
         <button id="tab-events-btn" class="main-tab-btn" onclick="switchMainTab('events')">🎉 Події</button>
@@ -79,12 +79,20 @@
         <button id="tab-favs-btn" class="main-tab-btn" onclick="switchMainTab('favorites')">⭐ Обране</button>
     </div>
 
-    <!-- Категорії (тільки для закладів) -->
-    <div id="categories-bar" class="categories">
+    <!-- Категорії Закладів -->
+    <div id="places-categories-bar" class="categories">
         <button class="cat-btn active" onclick="filterPlaces('all', this)">🔥 Усі</button>
         <button class="cat-btn" onclick="filterPlaces('Бар', this)">🍻 Бари / Пиво</button>
         <button class="cat-btn" onclick="filterPlaces('Live', this)">🎸 Live / Музика</button>
         <button class="cat-btn" onclick="filterPlaces('Стендап', this)">🎤 Шоу / Стендап</button>
+    </div>
+
+    <!-- Фільтри Дати для Подій -->
+    <div id="events-date-bar" class="categories" style="display: none;">
+        <button class="cat-btn active" onclick="filterEvents('all', this)">🔥 Усі дати</button>
+        <button class="cat-btn" onclick="filterEvents('today', this)">⚡ Сьогодні</button>
+        <button class="cat-btn" onclick="filterEvents('tomorrow', this)">🌙 Завтра</button>
+        <button class="cat-btn" onclick="filterEvents('weekend', this)">🎉 Вихідні</button>
     </div>
 
     <div id="map-container" style="display: none; width: 100%; height: 75vh; border-radius: 16px; border: 1px solid rgba(187, 107, 255, 0.2); overflow: hidden; position: relative;"></div>
@@ -93,7 +101,6 @@
         <div class="loader">⏳ Завантаження тусовок...</div>
     </div>
 
-    <!-- Модальне вікно -->
     <div id="modal" class="modal-overlay" onclick="closeModal(event)">
         <div class="modal-content" onclick="event.stopPropagation()">
             <div class="modal-header">
@@ -115,28 +122,21 @@
         const API_URL = "https://script.google.com/macros/s/AKfycbzHkKm2jhWes-KrKUcY5w7Yq5gCvp4ELum8sprFGfER20Tl6Ar2t21ghziV_M8AUUcBbg/exec";
         let dbData = { Заклади: [], Події: [] };
         let currentTab = 'places';
+        let currentPlaceFilter = 'all';
+        let currentEventDateFilter = 'all';
 
-        // Робота з localStorage для Обраного
         function getFavorites() {
-            try {
-                return JSON.parse(localStorage.getItem('lviv_party_favs') || '[]');
-            } catch (e) {
-                return [];
-            }
+            try { return JSON.parse(localStorage.getItem('lviv_party_favs') || '[]'); } catch (e) { return []; }
         }
 
         function toggleFavorite(type, id, event) {
-            event.stopPropagation(); // Зупиняємо відкриття модалки при кліку на серце
+            event.stopPropagation();
             let favs = getFavorites();
             const index = favs.findIndex(f => f.type === type && f.id === id);
-            
-            if (index > -1) {
-                favs.splice(index, 1);
-            } else {
-                favs.push({ type, id });
-            }
+            if (index > -1) favs.splice(index, 1);
+            else favs.push({ type, id });
             localStorage.setItem('lviv_party_favs', JSON.stringify(favs));
-            renderContent(); // Оновлюємо вигляд, щоб перемкнути колір серця
+            renderContent();
         }
 
         function isFavorite(type, id) {
@@ -167,69 +167,85 @@
             }
         }
 
-        function renderContent(filterCategory = 'all') {
+        // Перевірка відповідності події вибраному датовому фільтру
+        function matchDateFilter(dateStr, filter) {
+            if (filter === 'all' || !dateStr) return true;
+            
+            const lowerStr = String(dateStr).toLowerCase();
+            const now = new Date();
+            
+            const todayStr = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}`;
+            
+            const tomorrowObj = new Date(now);
+            tomorrowObj.setDate(now.getDate() + 1);
+            const tomorrowStr = `${String(tomorrowObj.getDate()).padStart(2, '0')}.${String(tomorrowObj.getMonth() + 1).padStart(2, '0')}`;
+
+            if (filter === 'today') {
+                return lowerStr.includes('сьогодні') || lowerStr.includes(todayStr);
+            }
+            if (filter === 'tomorrow') {
+                return lowerStr.includes('завтра') || lowerStr.includes(tomorrowStr);
+            }
+            if (filter === 'weekend') {
+                const dayOfWeek = now.getDay(); // 0 - Неділя, 6 - Субота
+                return lowerStr.includes('субота') || lowerStr.includes('неділя') || lowerStr.includes('вихідн');
+            }
+            return true;
+        }
+
+        function renderContent() {
             const container = document.getElementById('content-list');
             
             if (currentTab === 'favorites') {
                 const favs = getFavorites();
                 const places = dbData['Заклади'] || dbData['заклади'] || [];
                 const events = dbData['Події'] || [];
-                
                 let html = '';
                 
                 favs.forEach(fav => {
-                    if (fav.type === 'place') {
+                    if (fav.type === 'place' && places[fav.id]) {
                         const p = places[fav.id];
-                        if (p) {
-                            html += `
-                                <div class="card" onclick="openPlaceModal(${fav.id})">
-                                    <div class="fav-btn active" onclick="toggleFavorite('place', ${fav.id}, event)">♥</div>
-                                    ${(p['Фото (посилання)'] || p['Фото'] || p['Image']) ? `<img src="${p['Фото (посилання)'] || p['Фото'] || p['Image']}" class="card-img" alt="Фото">` : ''}
-                                    <div class="card-body">
-                                        <span class="card-badge">${p['Категорія'] || 'Бар / Тусовка'}</span>
-                                        <div class="card-title">${p['Назва закладу'] || p['Назва'] || ''}</div>
-                                        <div class="card-desc">${p['Опис / Вайб'] || p['Опис'] || ''}</div>
-                                        <div class="card-meta">📍 ${p['Адреса'] || 'Львів'}</div>
-                                    </div>
+                        html += `
+                            <div class="card" onclick="openPlaceModal(${fav.id})">
+                                <div class="fav-btn active" onclick="toggleFavorite('place', ${fav.id}, event)">♥</div>
+                                ${(p['Фото (посилання)'] || p['Фото'] || p['Image']) ? `<img src="${p['Фото (посилання)'] || p['Фото'] || p['Image']}" class="card-img" alt="Фото">` : ''}
+                                <div class="card-body">
+                                    <span class="card-badge">${p['Категорія'] || 'Бар / Тусовка'}</span>
+                                    <div class="card-title">${p['Назва закладу'] || p['Назва'] || ''}</div>
+                                    <div class="card-desc">${p['Опис / Вайб'] || p['Опис'] || ''}</div>
+                                    <div class="card-meta">📍 ${p['Адреса'] || 'Львів'}</div>
                                 </div>
-                            `;
-                        }
-                    } else if (fav.type === 'event') {
+                            </div>
+                        `;
+                    } else if (fav.type === 'event' && events[fav.id]) {
                         const e = events[fav.id];
-                        if (e) {
-                            const price = e['Ціна'] || e['Ціна при вході'] || e['Вартість'] || '';
-                            html += `
-                                <div class="card" onclick="openEventModal(${fav.id})">
-                                    <div class="fav-btn active" onclick="toggleFavorite('event', ${fav.id}, event)">♥</div>
-                                    ${e['Афіша (посилання)'] || e['Фото'] ? `<img src="${e['Афіша (посилання)'] || e['Фото']}" class="card-img" alt="Афіша">` : ''}
-                                    <div class="card-body">
-                                        <div style="display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap;">
-                                            <span class="card-badge">📅 ${e['Дата та час'] || 'Незабаром'}</span>
-                                            <span class="card-badge" style="background: rgba(212, 143, 255, 0.15); border-color: rgba(212, 143, 255, 0.3); color: #e8c5ff;">💵 ${price ? price : 'Ціна'}</span>
-                                        </div>
-                                        <div class="card-title">${e['Назва події'] || e['Назва'] || ''}</div>
-                                        <div class="card-meta">🏛 ${e['Заклад'] || e['Локація'] || ''}</div>
+                        const price = e['Ціна'] || e['Ціна при вході'] || e['Вартість'] || '';
+                        html += `
+                            <div class="card" onclick="openEventModal(${fav.id})">
+                                <div class="fav-btn active" onclick="toggleFavorite('event', ${fav.id}, event)">♥</div>
+                                ${e['Афіша (посилання)'] || e['Фото'] ? `<img src="${e['Афіша (посилання)'] || e['Фото']}" class="card-img" alt="Афіша">` : ''}
+                                <div class="card-body">
+                                    <div style="display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap;">
+                                        <span class="card-badge">📅 ${e['Дата та час'] || 'Незабаром'}</span>
+                                        <span class="card-badge" style="background: rgba(212, 143, 255, 0.15); border-color: rgba(212, 143, 255, 0.3); color: #e8c5ff;">💵 ${price ? price : 'Ціна'}</span>
                                     </div>
+                                    <div class="card-title">${e['Назва події'] || e['Назва'] || ''}</div>
+                                    <div class="card-meta">🏛 ${e['Заклад'] || e['Локація'] || ''}</div>
                                 </div>
-                            `;
-                        }
+                            </div>
+                        `;
                     }
                 });
-
-                if (html === '') {
-                    container.innerHTML = '<div class="loader">У вас ще немає збережених закладів чи подій ⭐<br>Натискайте сердечко на картках!</div>';
-                } else {
-                    container.innerHTML = html;
-                }
+                container.innerHTML = html || '<div class="loader">У вас ще немає збережених закладів чи подій ⭐<br>Натискайте сердечко на картках!</div>';
                 return;
             }
 
             if (currentTab === 'places') {
                 let places = dbData['Заклади'] || dbData['заклади'] || [];
-                if (filterCategory !== 'all') {
+                if (currentPlaceFilter !== 'all') {
                     places = places.filter(p => {
                         const cat = String(p['Категорія'] || p['Опис / Вайб'] || '').toLowerCase();
-                        return cat.includes(filterCategory.toLowerCase());
+                        return cat.includes(currentPlaceFilter.toLowerCase());
                     });
                 }
                 if (places.length === 0) {
@@ -253,9 +269,12 @@
                     `;
                 }).join('');
             } else {
-                const events = dbData['Події'] || [];
+                let events = dbData['Події'] || [];
+                if (currentEventDateFilter !== 'all') {
+                    events = events.filter(e => matchDateFilter(e['Дата та час'], currentEventDateFilter));
+                }
                 if (events.length === 0) {
-                    container.innerHTML = '<div class="loader">Афіша поки порожня 🎉</div>';
+                    container.innerHTML = '<div class="loader">На обрану дату подій не знайдено 🎉</div>';
                     return;
                 }
                 container.innerHTML = events.map((e, idx) => {
@@ -287,7 +306,6 @@
 
             document.getElementById('modal-badge').innerText = p['Категорія'] || 'Заклад';
             document.getElementById('modal-title').innerText = p['Назва закладу'] || p['Назва'] || '';
-            
             let metaHtml = `📍 ${p['Адреса'] || 'Львів'}`;
             if (p['Графік'] || p['Час роботи']) metaHtml += `<br>🕒 ${p['Графік'] || p['Час роботи']}`;
             document.getElementById('modal-meta').innerHTML = metaHtml;
@@ -383,7 +401,8 @@
             document.getElementById('tab-map-btn').className = `main-tab-btn ${tab === 'map' ? 'active' : ''}`;
             document.getElementById('tab-favs-btn').className = `main-tab-btn ${tab === 'favorites' ? 'active' : ''}`;
             
-            document.getElementById('categories-bar').style.display = (tab === 'places' ? 'flex' : 'none');
+            document.getElementById('places-categories-bar').style.display = (tab === 'places' ? 'flex' : 'none');
+            document.getElementById('events-date-bar').style.display = (tab === 'events' ? 'flex' : 'none');
             
             const contentList = document.getElementById('content-list');
             const mapContainer = document.getElementById('map-container');
@@ -406,11 +425,9 @@
 
         function createMarkerHtml(venueName, placeData, isLarge) {
             const icon = getCategoryIcon(placeData);
-            if (isLarge) {
-                return `<div class="custom-pin-wrapper"><div class="pin-large">${icon} ${venueName}</div></div>`;
-            } else {
-                return `<div class="custom-pin-wrapper"><div class="pin-small">${icon}</div></div>`;
-            }
+            return isLarge 
+                ? `<div class="custom-pin-wrapper"><div class="pin-large">${icon} ${venueName}</div></div>`
+                : `<div class="custom-pin-wrapper"><div class="pin-small">${icon}</div></div>`;
         }
 
         function updateMarkersZoom() {
@@ -475,9 +492,17 @@
         }
 
         function filterPlaces(category, btn) {
-            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('#places-categories-bar .cat-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            renderContent(category);
+            currentPlaceFilter = category;
+            renderContent();
+        }
+
+        function filterEvents(dateFilter, btn) {
+            document.querySelectorAll('#events-date-bar .cat-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentEventDateFilter = dateFilter;
+            renderContent();
         }
 
         loadData();
