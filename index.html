@@ -167,18 +167,20 @@
             }
         }
 
-        // Перевірка відповідності події вибраному датовому фільтру
+        // Покращений календарний фільтр дат
         function matchDateFilter(dateStr, filter) {
             if (filter === 'all' || !dateStr) return true;
             
             const lowerStr = String(dateStr).toLowerCase();
             const now = new Date();
             
-            const todayStr = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}`;
+            const formatDate = (d) => `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}`;
+            
+            const todayStr = formatDate(now);
             
             const tomorrowObj = new Date(now);
             tomorrowObj.setDate(now.getDate() + 1);
-            const tomorrowStr = `${String(tomorrowObj.getDate()).padStart(2, '0')}.${String(tomorrowObj.getMonth() + 1).padStart(2, '0')}`;
+            const tomorrowStr = formatDate(tomorrowObj);
 
             if (filter === 'today') {
                 return lowerStr.includes('сьогодні') || lowerStr.includes(todayStr);
@@ -187,8 +189,25 @@
                 return lowerStr.includes('завтра') || lowerStr.includes(tomorrowStr);
             }
             if (filter === 'weekend') {
-                const dayOfWeek = now.getDay(); // 0 - Неділя, 6 - Субота
-                return lowerStr.includes('субота') || lowerStr.includes('неділя') || lowerStr.includes('вихідн');
+                // Пошук за словами
+                if (lowerStr.includes('субота') || lowerStr.includes('неділя') || lowerStr.includes('вихідн')) {
+                    return true;
+                }
+                
+                // Динамічний розрахунок дати ближчих суботи та неділі
+                const currentDay = now.getDay(); // 0 - Неділя, 6 - Субота
+                const distToSat = (6 - currentDay + 7) % 7;
+                const distToSun = (0 - currentDay + 7) % 7;
+                
+                const satObj = new Date(now);
+                satObj.setDate(now.getDate() + distToSat);
+                const satStr = formatDate(satObj);
+                
+                const sunObj = new Date(now);
+                sunObj.setDate(now.getDate() + distToSun);
+                const sunStr = formatDate(sunObj);
+
+                return lowerStr.includes(satStr) || lowerStr.includes(sunStr);
             }
             return true;
         }
