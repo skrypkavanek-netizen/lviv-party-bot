@@ -171,17 +171,19 @@
                     }
 
                     return `
-                        <div class="card" onclick="openEventModal(${idx})">
-                            ${e['Афіша (посилання)'] || e['Фото'] ? `<img src="${e['Афіша (посилання)'] || e['Фото']}" class="card-img" alt="Афіша">` : ''}
-                            <div class="card-body">
-                                <span class="card-badge">📅 ${e['Дата та час'] || 'Незабаром'}</span>
-                                <div class="card-title">${e['Назва події'] || e['Назва'] || ''}</div>
-                                <div class="card-meta">🏛 ${e['Заклад'] || e['Локація'] || ''}</div>
-                                ${priceHtml}
-                                <div class="card-desc" style="margin-top: 6px;">${e['Опис події'] || e['Опис'] || ''}</div>
-                            </div>
-                        </div>
-                    `;
+    <div class="card" onclick="openEventModal(${idx})">
+        ${e['Афіша (посилання)'] || e['Фото'] ? `<img src="${e['Афіша (посилання)'] || e['Фото']}" class="card-img" alt="Афіша">` : ''}
+        <div class="card-body">
+            <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+                <span class="card-badge">📅 ${e['Дата та час'] || 'Незабаром'}</span>
+                <span class="card-badge" style="background: rgba(212, 143, 255, 0.15); border-color: rgba(212, 143, 255, 0.3);">💵 Ціна</span>
+            </div>
+            <div class="card-title">${e['Назва події'] || e['Назва'] || ''}</div>
+            <div class="card-meta">🏛 ${e['Заклад'] || e['Локація'] || ''}</div>
+            <div class="card-desc" style="margin-top: 6px;">${e['Опис події'] || e['Опис'] || ''}</div>
+        </div>
+    </div>
+`;
                 }).join('');
             }
         }
