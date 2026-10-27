@@ -157,21 +157,22 @@
                     container.innerHTML = '<div class="loader">Афіша поки порожня 🎉</div>';
                     return;
                 }
-
-                container.innerHTML = events.map((e, idx) => `
-                    <div class="card" onclick="openEventModal(${idx})">
-                        ${e['Афіша (посилання)'] || e['Фото'] ? `<img src="${e['Афіша (посилання)'] || e['Фото']}" class="card-img" alt="Афіша">` : ''}
-                        <div class="card-body">
-                            <div style="display: flex; gap: 6px; margin-bottom: 8px;">
-                                <span class="card-badge">📅 ${e['Дата та час'] || 'Незабаром'}</span>
-                                <span class="card-badge" style="background: rgba(212, 143, 255, 0.15); border-color: rgba(212, 143, 255, 0.3);">💵 Ціна</span>
-                            </div>
-                            <div class="card-title">${e['Назва події'] || e['Назва'] || ''}</div>
-                            <div class="card-meta">🏛 ${e['Заклад'] || e['Локація'] || ''}</div>
-                            <div class="card-desc" style="margin-top: 6px;">${e['Опис події'] || e['Опис'] || ''}</div>
-                        </div>
-                    </div>
-                `).join('');
+container.innerHTML = events.map((e, idx) => {
+    return `
+        <div class="card" onclick="openEventModal(${idx})">
+            ${e['Афіша (посилання)'] || e['Фото'] ? `<img src="${e['Афіша (посилання)'] || e['Фото']}" class="card-img" alt="Афіша">` : ''}
+            <div class="card-body">
+                <div style="display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap;">
+                    <span class="card-badge">📅 ${e['Дата та час'] || 'Незабаром'}</span>
+                    <span class="card-badge" style="background: rgba(212, 143, 255, 0.15); border-color: rgba(212, 143, 255, 0.3); color: #e8c5ff;">💵 Ціна</span>
+                </div>
+                <div class="card-title">${e['Назва події'] || e['Назва'] || ''}</div>
+                <div class="card-meta">🏛 ${e['Заклад'] || e['Локація'] || ''}</div>
+                <div class="card-desc" style="margin-top: 6px;">${e['Опис події'] || e['Опис'] || ''}</div>
+            </div>
+        </div>
+    `;
+}).join('');
             }
         }
 
