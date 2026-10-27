@@ -58,9 +58,15 @@ private static final String RENDER_URL = System.getenv("RENDER_URL");
 
                     System.out.println("Отримано запит. Текст: '" + text + "' від chatId: " + chatId);
 
-                    if ("/start".equals(text) && chatId != null) {
-                        sendMiniAppButton(chatId);
-                    }
+                    if ("/restart".equals(text) && chatId != null) {
+            sendMiniAppButton(chatId); // або можна надіслати текстове повідомлення
+        } else if ("/support".equals(text) && chatId != null) {
+            // Заміни @ваш_аккаунт на свій реальний юзернейм для підтримки
+            // Якщо у тебе є метод для відправки тексту, викликай його, або поки так:
+            sendMiniAppButton(chatId); 
+        } else if ("/start".equals(text) && chatId != null) {
+            sendMiniAppButton(chatId);
+        }
 
                     String response = "OK";
                     exchange.sendResponseHeaders(200, response.getBytes().length);
