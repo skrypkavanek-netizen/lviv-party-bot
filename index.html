@@ -159,7 +159,7 @@
                 }
 
                 container.innerHTML = events.map((e, idx) => {
-                    const priceText = String(e['_price'] || '').trim();
+                    const priceText = String(e['_price'] !== undefined ? e['_price'] : (e['Ціна при вході'] || '')).trim();
                     let priceHtml = '';
                     
                     if (priceText.toLowerCase().includes('вільний') || priceText.toLowerCase().includes('free')) {
@@ -217,7 +217,7 @@
             document.getElementById('modal-badge').innerText = `📅 ${e['Дата та час'] || 'Незабаром'}`;
             document.getElementById('modal-title').innerText = e['Назва події'] || e['Назва'] || '';
             
-            const priceText = String(e['_price'] || '').trim();
+            const priceText = String(e['_price'] !== undefined ? e['_price'] : (e['Ціна при вході'] || '')).trim();
             let priceInfo = '';
             if (priceText !== '') {
                 priceInfo = priceText.toLowerCase().includes('вільний') ? '<br>🟢 Вхід вільний' : `<br>💵 Ціна: ${priceText} грн`;
