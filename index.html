@@ -161,9 +161,9 @@
                     <div class="card" onclick="openEventModal(${idx})">
                         ${e['Афіша (посилання)'] || e['Фото'] ? `<img src="${e['Афіша (посилання)'] || e['Фото']}" class="card-img" alt="Афіша">` : ''}
                         <div class="card-body">
-                            <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+                            <div style="display: flex; gap: 8px; margin-bottom: 8px; align-items: center;">
                                 <span class="card-badge">📅 ${e['Дата та час'] || 'Незабаром'}</span>
-                                <span class="card-badge" style="background: rgba(168, 85, 247, 0.3); color: #fff;">💵 Ціна</span>
+                                <span class="card-badge" style="background: rgba(168, 85, 247, 0.25); border-color: rgba(168, 85, 247, 0.4); color: #f3effa;">💵 Ціна</span>
                             </div>
                             <div class="card-title">${e['Назва події'] || e['Назва'] || ''}</div>
                             <div class="card-meta">🏛 ${e['Заклад'] || e['Локація'] || ''}</div>
