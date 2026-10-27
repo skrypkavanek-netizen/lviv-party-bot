@@ -39,6 +39,8 @@
         .venue-events-section { margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(187, 107, 255, 0.2); }
         .venue-events-title { font-size: 15px; font-weight: bold; color: #d084ff; margin-bottom: 12px; }
         .venue-events-scroll { max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 4px; }
+        .venue-events-scroll::-webkit-scrollbar { width: 4px; }
+        .venue-events-scroll::-webkit-scrollbar-thumb { background: rgba(168, 85, 247, 0.4); border-radius: 4px; }
         .venue-event-card { background: rgba(35, 18, 56, 0.8); border: 1px solid rgba(187, 107, 255, 0.25); border-radius: 14px; overflow: hidden; }
         .venue-event-img { width: 100%; height: 130px; object-fit: cover; display: block; }
         .venue-event-body { padding: 12px; }
@@ -129,7 +131,7 @@
             const container = document.getElementById('content-list');
             
             if (currentTab === 'places') {
-                let places = dbData['Заклади'] || [];
+                let places = dbData['Заклади'] || dbData['заклади'] || [];
                 if (filterCategory !== 'all') {
                     places = places.filter(p => {
                         const cat = String(p['Категорія'] || p['Опис / Вайб'] || '').toLowerCase();
@@ -148,6 +150,7 @@
                             <div class="card-title">${p['Назва закладу'] || p['Назва'] || ''}</div>
                             <div class="card-desc">${p['Опис / Вайб'] || p['Опис'] || ''}</div>
                             <div class="card-meta">📍 ${p['Адреса'] || 'Львів'}</div>
+                            ${(p['Графік'] || p['Час роботи']) ? `<div class="card-meta" style="margin-top: 4px; color: #d084ff;">🕒 ${p['Графік'] || p['Час роботи']}</div>` : ''}
                         </div>
                     </div>
                 `).join('');
@@ -157,42 +160,79 @@
                     container.innerHTML = '<div class="loader">Афіша поки порожня 🎉</div>';
                     return;
                 }
-                container.innerHTML = events.map((e, idx) => `
-                    <div class="card" onclick="openEventModal(${idx})">
-                        ${e['Афіша (посилання)'] || e['Фото'] ? `<img src="${e['Афіша (посилання)'] || e['Фото']}" class="card-img" alt="Афіша">` : ''}
-                        <div class="card-body">
-                            <div style="display: flex; gap: 8px; margin-bottom: 8px; align-items: center;">
-                                <span class="card-badge">📅 ${e['Дата та час'] || 'Незабаром'}</span>
-                                <span class="card-badge" style="background: rgba(168, 85, 247, 0.25); border-color: rgba(168, 85, 247, 0.4); color: #f3effa;">💵 Ціна</span>
+                container.innerHTML = events.map((e, idx) => {
+                    const price = e['Ціна'] || e['Ціна при вході'] || e['Вартість'] || '';
+                    return `
+                        <div class="card" onclick="openEventModal(${idx})">
+                            ${e['Афіша (посилання)'] || e['Фото'] ? `<img src="${e['Афіша (посилання)'] || e['Фото']}" class="card-img" alt="Афіша">` : ''}
+                            <div class="card-body">
+                                <div style="display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap;">
+                                    <span class="card-badge">📅 ${e['Дата та час'] || 'Незабаром'}</span>
+                                    <span class="card-badge" style="background: rgba(212, 143, 255, 0.15); border-color: rgba(212, 143, 255, 0.3); color: #e8c5ff;">💵 ${price ? price : 'Ціна'}</span>
+                                </div>
+                                <div class="card-title">${e['Назва події'] || e['Назва'] || ''}</div>
+                                <div class="card-meta">🏛 ${e['Заклад'] || e['Локація'] || ''}</div>
+                                <div class="card-desc" style="margin-top: 6px;">${e['Опис події'] || e['Опис'] || ''}</div>
                             </div>
-                            <div class="card-title">${e['Назва події'] || e['Назва'] || ''}</div>
-                            <div class="card-meta">🏛 ${e['Заклад'] || e['Локація'] || ''}</div>
-                            <div class="card-desc" style="margin-top: 6px;">${e['Опис події'] || e['Опис'] || ''}</div>
                         </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             }
         }
 
         function openPlaceModal(idx) {
-            const places = dbData['Заклади'] || [];
+            const places = dbData['Заклади'] || dbData['заклади'] || [];
             const p = places[idx];
             if (!p) return;
 
             document.getElementById('modal-badge').innerText = p['Категорія'] || 'Заклад';
             document.getElementById('modal-title').innerText = p['Назва закладу'] || p['Назва'] || '';
-            document.getElementById('modal-meta').innerHTML = `📍 ${p['Адреса'] || 'Львів'}`;
+            
+            let metaHtml = `📍 ${p['Адреса'] || 'Львів'}`;
+            if (p['Графік'] || p['Час роботи']) metaHtml += `<br>🕒 ${p['Графік'] || p['Час роботи']}`;
+            document.getElementById('modal-meta').innerHTML = metaHtml;
             document.getElementById('modal-desc').innerText = p['Опис / Вайб'] || p['Опис'] || '';
-            document.getElementById('modal-events-list').innerHTML = '';
+
+            const venueName = (p['Назва закладу'] || p['Назва'] || '').toLowerCase().trim();
+            const venueEvents = (dbData['Події'] || []).filter(e => {
+                const eventVenue = String(e['Заклад'] || e['Локація'] || '').toLowerCase().trim();
+                return eventVenue !== '' && (eventVenue.includes(venueName) || venueName.includes(eventVenue));
+            });
+
+            const eventsContainer = document.getElementById('modal-events-list');
+            if (venueEvents.length > 0) {
+                eventsContainer.innerHTML = `
+                    <div class="venue-events-section">
+                        <div class="venue-events-title">🎉 Афіша подій у закладі:</div>
+                        <div class="venue-events-scroll">
+                            ${venueEvents.map(e => `
+                                <div class="venue-event-card">
+                                    ${(e['Афіша (посилання)'] || e['Фото']) ? `<img src="${e['Афіша (посилання)'] || e['Фото']}" class="venue-event-img" alt="Афіша події">` : ''}
+                                    <div class="venue-event-body">
+                                        <div class="venue-event-name">${e['Назва події'] || e['Назва'] || ''}</div>
+                                        <div class="venue-event-time">📅 ${e['Дата та час'] || 'Незабаром'}</div>
+                                        ${(e['Опис події'] || e['Опис']) ? `<div class="venue-event-desc">${e['Опис події'] || e['Опис']}</div>` : ''}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                eventsContainer.innerHTML = '';
+            }
 
             const img = document.getElementById('modal-img');
-            const photoUrl = p['Фото (посилання)'] || p['Фото'];
+            const photoUrl = p['Фото (посилання)'] || p['Фото'] || p['Image'];
             if (photoUrl) { img.src = photoUrl; img.style.display = 'block'; } else { img.style.display = 'none'; }
 
             const btn = document.getElementById('modal-btn');
-            const mapUrl = p['Карта'] || p['Google Maps'];
+            const mapUrl = p['Карта'] || p['Посилання на карту'] || p['Google Maps'];
             if (mapUrl) {
                 btn.href = mapUrl; btn.innerText = '🗺 Відкрити в Google Maps'; btn.style.display = 'block';
+            } else if (p['Адреса']) {
+                btn.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p['Адреса'] + ', Львів')}`;
+                btn.innerText = '🗺 Шукати адресу на карті'; btn.style.display = 'block';
             } else {
                 btn.style.display = 'none';
             }
@@ -204,7 +244,8 @@
             const e = events[idx];
             if (!e) return;
 
-            document.getElementById('modal-badge').innerText = `📅 ${e['Дата та час'] || 'Незабаром'}`;
+            const priceText = e['Ціна'] || e['Ціна при вході'] || e['Вартість'] ? ` | 💵 ${e['Ціна'] || e['Ціна при вході'] || e['Вартість']}` : '';
+            document.getElementById('modal-badge').innerText = `📅 ${e['Дата та час'] || 'Незабаром'}${priceText}`;
             document.getElementById('modal-title').innerText = e['Назва події'] || e['Назва'] || '';
             document.getElementById('modal-meta').innerHTML = `🏛 ${e['Заклад'] || e['Локація'] || ''}`;
             document.getElementById('modal-desc').innerText = e['Опис події'] || e['Опис'] || '';
@@ -215,34 +256,19 @@
             if (photoUrl) { img.src = photoUrl; img.style.display = 'block'; } else { img.style.display = 'none'; }
 
             const btn = document.getElementById('modal-btn');
-            const ticketUrl = String(e['Квитки'] || '').trim();
-            
-            if (ticketUrl !== '' && ticketUrl.startsWith('http')) {
+            const ticketUrl = e['Квитки'] || e['Посилання'];
+            if (ticketUrl) {
                 btn.href = ticketUrl;
-                btn.innerText = '🎟 Придбати квитки';
+                btn.innerText = '🎟 Придбати квитки / Детальніше';
                 btn.style.display = 'block';
             } else {
-                const eventVenueName = String(e['Заклад'] || '').toLowerCase().trim();
-                const places = dbData['Заклади'] || [];
-                const matchedPlace = places.find(p => {
-                    const pName = String(p['Назва закладу'] || p['Назва'] || '').toLowerCase().trim();
-                    return pName !== '' && eventVenueName.includes(pName);
-                });
-
-                const placeMapUrl = matchedPlace ? (matchedPlace['Карта'] || matchedPlace['Google Maps']) : '';
-                if (placeMapUrl) {
-                    btn.href = placeMapUrl;
-                    btn.innerText = '📍 Переглянути заклад на мапі';
-                    btn.style.display = 'block';
-                } else {
-                    btn.style.display = 'none';
-                }
+                btn.style.display = 'none';
             }
             document.getElementById('modal').classList.add('open');
         }
 
-        function closeModal(event) {
-            if (!event || event.target.classList.contains('modal-overlay') || event.target.classList.contains('modal-close')) {
+        function closeModal(e) {
+            if (!e || e.target.classList.contains('modal-overlay') || e.target.classList.contains('modal-close')) {
                 document.getElementById('modal').classList.remove('open');
             }
         }
@@ -271,19 +297,77 @@
             }
         }
 
-        function initMap() {
-            const places = dbData['Заклади'] || [];
-            if (!map) {
-                map = L.map('map-container').setView([49.842957, 24.031111], 14);
-                L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+        function getCategoryIcon(placeData) {
+            const customIcon = placeData['Іконка'] || placeData['Смайлик'] || placeData['Emoji'];
+            return (customIcon && String(customIcon).trim() !== '') ? String(customIcon).trim() : '🍸';
+        }
+
+        function createMarkerHtml(venueName, placeData, isLarge) {
+            const icon = getCategoryIcon(placeData);
+            if (isLarge) {
+                return `<div class="custom-pin-wrapper"><div class="pin-large">${icon} ${venueName}</div></div>`;
+            } else {
+                return `<div class="custom-pin-wrapper"><div class="pin-small">${icon}</div></div>`;
             }
+        }
+
+        function updateMarkersZoom() {
+            if (!map) return;
+            const isLarge = map.getZoom() >= 17;
+            placeMarkers.forEach(item => {
+                item.marker.setIcon(L.divIcon({
+                    className: 'venue-marker',
+                    html: createMarkerHtml(item.name, item.placeData, isLarge),
+                    iconAnchor: [0, 0]
+                }));
+            });
+        }
+
+        function initMap() {
+            const places = dbData['Заклади'] || dbData['заклади'] || [];
+            if (!map) {
+                map = L.map('map-container', { zoomControl: true }).setView([49.842957, 24.031111], 14);
+                L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
+                map.on('zoomend', updateMarkersZoom);
+
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(position => {
+                        const userIcon = L.divIcon({
+                            className: 'user-location-marker',
+                            html: '<div style="background:#007aff; width:14px; height:14px; border-radius:50%; border:3px solid #fff; box-shadow:0 0 10px #007aff;"></div>',
+                            iconSize: [14, 14], iconAnchor: [7, 7]
+                        });
+                        L.marker([position.coords.latitude, position.coords.longitude], { icon: userIcon }).addTo(map).bindPopup('<b>Ви тут 📍</b>');
+                    }, () => {});
+                }
+            }
+
+            placeMarkers.forEach(item => map.removeLayer(item.marker));
+            placeMarkers = [];
+            const isLarge = map.getZoom() >= 17;
+
             places.forEach((p, idx) => {
-                let lat = parseFloat(p['Широта'] || p['Lat']);
-                let lng = parseFloat(p['Довгота'] || p['Lng']);
+                const rawLat = p['Широта'] || p['Lat'] || p['lat'] || p['latitude'] || p['Координати'];
+                const rawLng = p['Довгота'] || p['Lng'] || p['lng'] || p['longitude'];
+                let lat = parseFloat(rawLat);
+                let lng = parseFloat(rawLng);
+
+                if (isNaN(lat) && typeof rawLat === 'string' && rawLat.includes(',')) {
+                    const parts = rawLat.split(',');
+                    lat = parseFloat(parts[0]);
+                    lng = parseFloat(parts[1]);
+                }
+
                 if (!isNaN(lat) && !isNaN(lng)) {
-                    const marker = L.marker([lat, lng]).addTo(map);
+                    const venueName = p['Назва закладу'] || p['Назва'] || 'Заклад';
+                    const venueIcon = L.divIcon({
+                        className: 'venue-marker',
+                        html: createMarkerHtml(venueName, p, isLarge),
+                        iconAnchor: [0, 0]
+                    });
+                    const marker = L.marker([lat, lng], { icon: venueIcon }).addTo(map);
                     marker.on('click', () => openPlaceModal(idx));
-                    placeMarkers.push(marker);
+                    placeMarkers.push({ marker, name: venueName, placeData: p });
                 }
             });
         }
