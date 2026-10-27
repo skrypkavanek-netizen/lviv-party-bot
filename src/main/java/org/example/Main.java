@@ -13,7 +13,8 @@ import java.util.regex.Pattern;
 
 public class Main {
     private static final String BOT_TOKEN = System.getenv("BOT_TOKEN");
-private static final String RENDER_URL = System.getenv("RENDER_URL");
+    private static final String RENDER_URL = System.getenv("RENDER_URL");
+
     public static void main(String[] args) {
         try {
             startHttpServer();
@@ -32,7 +33,6 @@ private static final String RENDER_URL = System.getenv("RENDER_URL");
         server.createContext("/", exchange -> {
             String method = exchange.getRequestMethod();
             
-            // Якщо це GET-запит (наприклад, від UptimeRobot або браузера)
             if ("GET".equalsIgnoreCase(method)) {
                 String response = "Lviv Party Bot is active and running 24/7! 🍸";
                 exchange.sendResponseHeaders(200, response.getBytes().length);
@@ -42,31 +42,28 @@ private static final String RENDER_URL = System.getenv("RENDER_URL");
                 return;
             }
 
-            // Якщо це POST-запит від Telegram
             if ("POST".equalsIgnoreCase(method)) {
                 try {
                     String requestBody = new String(exchange.getRequestBody().readAllBytes());
                     
-                    // Безпечний парсинг з перевіркою на null
                     String chatId = extractJsonField(requestBody, "chat", "id");
                     String text = extractStringField(requestBody, "text");
 
-                    // Якщо текст відсутній (наприклад, користувач надіслав стікер, фото чи натиснув кнопку)
                     if (text == null) {
                         text = "";
                     }
 
                     System.out.println("Отримано запит. Текст: '" + text + "' від chatId: " + chatId);
 
+                    // Обробка команд
                     if ("/restart".equals(text) && chatId != null) {
-            sendMiniAppButton(chatId); // або можна надіслати текстове повідомлення
-        } else if ("/support".equals(text) && chatId != null) {
-            // Заміни @ваш_аккаунт на свій реальний юзернейм для підтримки
-            // Якщо у тебе є метод для відправки тексту, викликай його, або поки так:
-            sendMiniAppButton(chatId); 
-        } else if ("/start".equals(text) && chatId != null) {
-            sendMiniAppButton(chatId);
-        }
+                        sendMiniAppButton(chatId, "Бот перезапущений! 🔄\nНатисни кнопку нижче, щоб відкрити каталог:");
+                    } else if ("/support".equals(text) && chatId != null) {
+                        // Тут вкажи свій другий аккаунт для підтримки
+                        sendTextMessage(chatId, "💬 З усіх питань та пропозицій пиши в службу підтримки: @soulgoth67"); 
+                    } else if ("/start".equals(text) && chatId != null) {
+                        sendMiniAppButton(chatId, "Запустити!\nТвій персональний гід вечірками та подіями Львова! 🕺✨");
+                    }
 
                     String response = "OK";
                     exchange.sendResponseHeaders(200, response.getBytes().length);
@@ -82,7 +79,7 @@ private static final String RENDER_URL = System.getenv("RENDER_URL");
                     os.close();
                 }
             } else {
-                exchange.sendResponseHeaders(405, 0); // Method Not Allowed
+                exchange.sendResponseHeaders(405, 0);
                 exchange.close();
             }
         });
@@ -106,7 +103,6 @@ private static final String RENDER_URL = System.getenv("RENDER_URL");
         if (matcher.find()) {
             return matcher.group(1);
         }
-        // Запасний варіант для простого пошуку ID
         Pattern patternSimple = Pattern.compile("\"" + field + "\"\\s*:\\s*(-?\\d+)");
         Matcher matcherSimple = patternSimple.matcher(json);
         if (matcherSimple.find()) {
@@ -130,15 +126,15 @@ private static final String RENDER_URL = System.getenv("RENDER_URL");
         }
     }
 
-    private static void sendMiniAppButton(String chatId) {
+    // Метод для відправки тексту зі збереженням кнопки Каталогу (для /start та /restart)
+    private static void sendMiniAppButton(String chatId, String customText) {
         try {
-            // Динамічний параметр часу збірки/запуску захищає від застрягання в кеші Telegram
             long cacheVersion = System.currentTimeMillis();
             String webAppUrl = "https://skrypkavanek-netizen.github.io/lviv-party-bot/?v=" + cacheVersion;
 
             String jsonBody = "{" +
                     "\"chat_id\":\"" + chatId + "\"," +
-                    "\"text\":\"Вітаємо у тусовелі Львова! 🍸\\nНатисни кнопку нижче, щоб відкрити каталог закладів:\"," +
+                    "\"text\":\"" + customText + "\"," +
                     "\"reply_markup\":{" +
                         "\"inline_keyboard\":[[{" +
                             "\"text\":\"🎉 Відкрити Каталог Закладів\"," +
@@ -155,7 +151,29 @@ private static final String RENDER_URL = System.getenv("RENDER_URL");
                     .build();
             
             client.send(request, HttpResponse.BodyHandlers.ofString());
-            System.out.println("Відповідь на /start успішно надіслана з версією сайту: " + cacheVersion);
+            System.out.println("Повідомлення успішно надіслано для chatId: " + chatId);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Метод для відправки звичайного текстового повідомлення (для /support)
+    private static void sendTextMessage(String chatId, String text) {
+        try {
+            String jsonBody = "{" +
+                    "\"chat_id\":\"" + chatId + "\"," +
+                    "\"text\":\"" + text + "\"" +
+                "}";
+
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.telegram.org/bot" + BOT_TOKEN + "/sendMessage"))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
+                    .build();
+            
+            client.send(request, HttpResponse.BodyHandlers.ofString());
+            System.out.println("Текстове повідомлення підтримки надіслано для chatId: " + chatId);
         } catch (Exception e) {
             e.printStackTrace();
         }
