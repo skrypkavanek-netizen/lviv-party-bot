@@ -60,7 +60,7 @@ public class Main {
                         sendMiniAppButton(chatId, "Бот перезапущений! 🔄\nНатисни кнопку нижче, щоб відкрити каталог:");
                     } else if ("/support".equals(text) && chatId != null) {
                         // Тут вкажи свій другий аккаунт для підтримки
-                        sendTextMessage(chatId, "💬 З усіх питань та пропозицій пиши в службу підтримки: @skrypkavanek"); 
+                        sendTextMessage(chatId, "💬 З усіх питань та пропозицій пиши в службу підтримки: @soulgoth67"); 
                     } else if ("/start".equals(text) && chatId != null) {
                         sendMiniAppButton(chatId, "Запустити!\nТвій персональний гід вечірками та подіями Львова! 🕺✨");
                     }
