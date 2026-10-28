@@ -149,9 +149,9 @@
             }
         }
 
-        // Функція для поширення бота з прямим посиланням на Mini App (генерує гарне прев'ю)
+        // Функція для поширення бота з прямим посиланням на основний Mini App
         function shareBotApp() {
-            const shareUrl = "t.me/tusa_jusas_bot/app";
+            const shareUrl = "https://t.me/tusa_jusas_bot/app";
             const shareText = "🍸 Перевіряй найкращі вечірки та заклади Львова в одному місці!";
             const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
             
@@ -564,7 +564,7 @@
 
             places.forEach((p, idx) => {
                 const rawLat = p['Широта'] || p['Lat'] || p['lat'] || p['latitude'] || p['Координати'];
-                const rawLng = p['Довгота'] || p['Lon'] || p['lng'] || p['longitude'];
+                const rawLng = p['Довгота'] || p['Lng'] || p['lng'] || p['longitude'];
                 let lat = parseFloat(rawLat);
                 let lng = parseFloat(rawLng);
 
